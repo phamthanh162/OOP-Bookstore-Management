@@ -129,12 +129,12 @@ MainWindow::MainWindow(QString role, QWidget *parent) : QWidget(parent), current
         stackedPages->setCurrentIndex(2);
         
         // Đổi tên cửa sổ app cho nhân viên biết thân biết phận :))
-        setWindowTitle("Fahasa POS - Quầy Thu Ngân (Nhân viên)");
+        setWindowTitle("Fetel POS - Quầy Thu Ngân (Nhân viên)");
     } else {
         // Admin thì mặc định vào trang Tổng quan (vị trí 0)
         sideMenu->setCurrentRow(0);
         stackedPages->setCurrentIndex(0);
-        setWindowTitle("Fahasa Hệ thống Quản trị (Quyền Admin)");
+        setWindowTitle("Fetel Hệ thống Quản trị (Quyền Admin)");
     }
 
     // --- NẠP DỮ LIỆU KHI MỞ APP ---
@@ -374,6 +374,7 @@ QWidget* MainWindow::createInventoryPage() {
     formLayout->addRow("Tác giả:", authorInput);
     formLayout->addRow("Số lượng tồn:", quantityInput);
     formLayout->addRow("Giá bán (VNĐ):", priceInput);
+
 
 // --- KHU VỰC 2: Các nút chức năng ---
     QHBoxLayout *buttonLayout = new QHBoxLayout();
@@ -984,7 +985,7 @@ QWidget* MainWindow::createSalesPage() {
                 // 2. Tiêu đề màu Xanh Đậm Premium
                 painter.setPen(QColor("#1A237E")); 
                 painter.setFont(QFont("Arial", 30, QFont::Bold));
-                painter.drawText(card.rect(), Qt::AlignTop | Qt::AlignHCenter, "\nFAHASA DIAMOND");
+                painter.drawText(card.rect(), Qt::AlignTop | Qt::AlignHCenter, "\nFETEL DIAMOND");
 
                 // 3. Thông tin khách hàng - PHẢI DÙNG MÀU ĐEN/XÁM ĐẬM
                 painter.setPen(QColor("#2D3748")); // Màu xám đen sang trọng
@@ -1144,7 +1145,7 @@ QWidget* MainWindow::createSalesPage() {
 
         // Vẽ Tiêu đề Thẻ
         painter.setFont(QFont("Arial", 28, QFont::Bold));
-        painter.drawText(card.rect(), Qt::AlignTop | Qt::AlignHCenter, "\nFAHASA DIAMOND");
+        painter.drawText(card.rect(), Qt::AlignTop | Qt::AlignHCenter, "\nFETEL DIAMOND");
 
         // Vẽ Thông tin khách hàng
         painter.setPen(Qt::white); 
