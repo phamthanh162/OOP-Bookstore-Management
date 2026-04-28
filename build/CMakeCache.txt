@@ -330,9 +330,6 @@ Qt6WidgetsTools_DIR:PATH=C:/msys64/ucrt64/lib/cmake/Qt6WidgetsTools
 //The directory containing a CMake configuration file for Qt6Widgets.
 Qt6Widgets_DIR:PATH=C:/msys64/ucrt64/lib/cmake/Qt6Widgets
 
-//The directory containing a CMake configuration file for Qt6.
-Qt6_DIR:PATH=Qt6_DIR-NOTFOUND
-
 //Path to a program.
 Vulkan_GLSLANG_VALIDATOR_EXECUTABLE:FILEPATH=Vulkan_GLSLANG_VALIDATOR_EXECUTABLE-NOTFOUND
 
