@@ -1,3 +1,528 @@
+#pragma once
+#include <QObject>
+
+class AppController : public QObject {
+    Q_OBJECT
+public:
+    explicit AppController(QObject *parent = nullptr);
+    void start(); // Hàm mồi để chạy app
+
+private slots:
+    void showLogin(); // Hàm hiển thị luồng đăng nhập
+};
+#pragma once
+#include <QString>
+
+class Book {
+protected: // Dùng protected để lớp con có thể kế thừa
+    QString id;
+    QString title;
+    QString author;
+    int quantity;
+    double price;
+
+public:
+    Book(); // Constructor mặc định
+    Book(QString id, QString title, QString author, int quantity, double price);
+    virtual ~Book() {} // Hàm hủy ảo để an toàn cho đa hình
+
+    // Các hàm Getter (Lấy dữ liệu)
+    QString getId() const;
+    QString getTitle() const;
+    QString getAuthor() const;
+    int getQuantity() const;
+    double getPrice() const;
+
+    // Các hàm Setter (Sửa dữ liệu)
+    void setQuantity(int qty);
+    void setPrice(double pr);
+
+    // Hàm Đa hình (Polymorphism)
+    virtual QString getType() const { return "Sách thường"; }
+};
+
+// --- LỚP CON KẾ THỪA ---
+class TextBook : public Book {
+    int grade;
+public:
+    TextBook(QString id, QString title, QString author, int qty, double pr, int g)
+        : Book(id, title, author, qty, pr), grade(g) {}
+    
+    QString getType() const override { 
+        return "Sách Giáo Khoa (Lớp " + QString::number(grade) + ")"; 
+    }
+};
+#pragma once
+#include <QString>
+
+class Customer {
+private:
+    QString phone;
+    int points;
+    QString rank; // Đồng, Bạc, Vàng
+
+public:
+    Customer(QString p, int pts = 0) : phone(p), points(pts) {
+        updateRank();
+    }
+
+    void addPoints(int p) { points += p; updateRank(); }
+
+    void updateRank() {
+            if (points >= 3000) rank = "Kim Cương";
+            else if (points >= 1000) rank = "Vàng";
+            else if (points >= 500) rank = "Bạc";
+            else rank = "Đồng";
+        }
+
+    QString getPhone() const { return phone; }
+    QString getRank() const { return rank; }
+    int getPoints() const { return points; }
+};
+#pragma once
+#include <QVector>
+#include "Book.h"
+
+class InventoryManager {
+private:
+    QVector<Book> bookList; // Danh sách sách trong kho
+
+public:
+    InventoryManager();
+
+    // Các hàm nghiệp vụ cốt lõi
+    void addBook(const Book& newBook);
+    bool removeBook(const QString& id);
+    bool updateBook(const QString& id, const Book& newBook);
+    Book* findBookById(const QString& id); // Trả về con trỏ để dễ kiểm tra Null
+    
+    // Lấy toàn bộ danh sách để in ra bảng giao diện
+    QVector<Book> getAllBooks() const;
+
+    void saveToFile(const QString& fileName);
+    void loadFromFile(const QString& fileName);
+};
+#pragma once
+#include <QDialog>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QString> // Thêm thư viện này
+
+class LoginDialog : public QDialog {
+    Q_OBJECT // Bắt buộc phải có để dùng Signal/Slot
+
+public:
+    explicit LoginDialog(QWidget *parent = nullptr);
+    QString getRole() const { return userRole; } // <--- Thêm hàm này
+
+protected:
+    void changeEvent(QEvent *event) override;
+
+private:
+    // Các biến giao diện
+    QLineEdit *txtUser = nullptr;
+    QLineEdit *txtPass = nullptr;
+    QPushButton *btnLogin = nullptr;
+
+    QString userRole; // <--- Thêm biến lưu Quyền (Role)
+
+    // Các hàm xử lý
+    void setupUI();
+    void handleLogin();
+    void updateTheme();
+};
+#pragma once
+#include "InventoryManager.h"
+#include "ReportManager.h"
+
+#include <QWidget>
+#include <QListWidget>
+#include <QStackedWidget>
+#include <QTableWidget>
+#include <QLineEdit>
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include <QtCharts>
+#include <QChart>
+#include <QBarCategoryAxis>
+#include <QValueAxis>
+
+class MainWindow : public QWidget {
+    Q_OBJECT 
+
+public:
+    // Cho phép truyền tham số "role" (Quyền) vào khi khởi tạo app
+    explicit MainWindow(QString role = "Admin", QWidget *parent = nullptr);
+
+signals:
+    void logoutRequested(); // <--- CHÈN VÀO ĐÂY: Tín hiệu báo hệ thống cần đăng xuất
+
+// Thêm vào phần private slots:
+private slots:
+    void on_btnMenuReport_clicked(); // Xử lý khi bấm nút "Báo cáo" ở sidebar
+    void refreshReportData();        // Cập nhật lại số liệu
+
+protected:
+    // Hàm hệ thống của Qt, tự động kích hoạt khi có biến động từ Windows
+    void changeEvent(QEvent *event) override;
+
+private:
+    // --- BIẾN CHO TRANG DASHBOARD & BÁO CÁO ---
+    QLabel *lblDashTotalBooks; // <--- THÊM DÒNG NÀY
+    QLabel *lblDashTotalValue; // <--- THÊM DÒNG NÀY
+    QLabel *lblDashTotalInvoices;  // <--- THÊM BIẾN NÀY (Tổng hóa đơn)
+    QLabel *lblDashTotalCustomers; // <--- THÊM BIẾN NÀY (Tổng khách hàng)
+
+    // THÊM 5 BIẾN NÀY ĐỂ ĐIỀU KHIỂN BIỂU ĐỒ VÀ BẢNG TOP 10:
+    QChart *inventoryChart = nullptr;
+    QBarCategoryAxis *inventoryAxisX = nullptr;
+    QValueAxis *inventoryAxisY = nullptr;
+    QTableWidget *tableTopBooks = nullptr;
+    
+    ReportManager* reportManager;
+    
+    // UI elements cho trang Báo cáo
+    QWidget* reportPage;
+    QTableWidget* tableLowStock;
+
+    QListWidget *sideMenu;        
+    QStackedWidget *stackedPages; 
+    QString userRole; // <--- Thêm biến lưu Quyền (Role)
+    QString currentUserRole;
+
+    // --- BIẾN CHO TRANG QUẢN LÝ KHO ---
+    InventoryManager manager; 
+    QTableWidget *inventoryTable; 
+    QLineEdit *idInput, *titleInput, *authorInput, *quantityInput, *priceInput;
+    QLineEdit *searchInventoryInput; // <--- THÊM DÒNG NÀY (Thanh tìm kiếm kho)
+
+    // --- BIẾN CHO TRANG DASHBOARD ---
+    QLabel *lblTotalBooks;
+    QLabel *lblTotalValue;
+
+    // Thêm 3 dòng này vào dưới lblTotalValue
+    QLabel *lblTotalSold;
+    QLabel *lblTotalRevenue;
+    QLabel *lblTotalCost;    // <--- THÊM BIẾN NÀY (Tiền vốn sách)
+    QLabel *lblTotalProfit;
+
+    // --- BIẾN MỚI CHO TRANG BÁN HÀNG (POS) ---
+    // Gắn nullptr để an toàn tuyệt đối khi app vừa khởi động
+    QTableWidget *salesBookTable = nullptr; 
+    QTableWidget *cartTable = nullptr;      
+    QLabel *lblCartTotal = nullptr;   
+    QLineEdit *searchSalesInput;    // <--- THÊM DÒNG NÀY (Thanh tìm kiếm quầy bán)      
+
+    QLineEdit *txtVoucher;
+    double voucherPercent = 0.0; // Lưu % giảm (VD: 0.15)
+    double voucherFlat = 0.0;    // Lưu số tiền giảm thẳng (VD: 50000)
+
+    // THÊM 3 DÒNG NÀY VÀO:
+    QLineEdit *txtCustomerPhone; 
+    QLabel *lblCustomerInfo;
+    double currentDiscount = 0.0; // Lưu % giảm giá (VD: 0.05 là 5%)
+    
+    // --- KHAI BÁO CÁC HÀM ---
+    void setupUI();
+    QWidget* createDashboardPage();
+    QWidget* createInventoryPage(); 
+    QWidget* createSalesPage();     
+    QWidget* createSettingsPage();  
+
+    QWidget* createReportPage();    // <--- THÊM DÒNG NÀY VÀO ĐÂY
+    
+    void refreshInventoryTable();
+    void updateDashboardStats();
+    
+    // --- HÀM MỚI CHO TRANG BÁN HÀNG ---
+    void refreshSalesBookTable();
+    void updateCartTotal();
+
+    // --- BIẾN CHO DASHBOARD ---
+    QTableWidget *recentSalesTable = nullptr; 
+
+    QTableWidget *recentImportsTable = nullptr; // <--- THÊM BIẾN NÀY
+
+    void loadSalesHistory(); // Hàm quét ổ cứng tìm hóa đơn
+    void loadImportHistory(); // <--- THÊM HÀM NÀY (Quét tìm phiếu nhập)
+    void updateTheme(); // Hàm do ta tự viết để tính toán lại toàn bộ màu sắc
+};
+
+#ifndef REPORTMANAGER_H
+#define REPORTMANAGER_H
+
+#include "InventoryManager.h"
+#include <vector>
+#include <QString>
+
+class ReportManager {
+private:
+    InventoryManager* inventory;
+
+public:
+    // Khởi tạo với con trỏ trỏ đến kho hàng hiện tại
+    ReportManager(InventoryManager* inv);
+
+    // Các hàm thống kê cơ bản
+    int getTotalBooksInStock();       // Tổng số lượng sách trong kho
+    double getTotalInventoryValue();  // Tổng giá trị kho hàng
+    
+    // Bạn có thể thêm hàm lấy danh sách sách sắp hết hàng (ví dụ: số lượng < 10)
+    // std::vector<Book> getLowStockBooks(int threshold = 10); 
+};
+
+#endif // REPORTMANAGER_H
+#include "AppController.h"
+#include "LoginDialog.h"
+#include "MainWindow.h"
+
+#include <QApplication>
+#include <cstdlib>
+
+AppController::AppController(QObject *parent) : QObject(parent) {}
+
+void AppController::start() {
+    showLogin();
+}
+
+void AppController::showLogin() {
+    LoginDialog* login = new LoginDialog();
+
+    // Chờ người dùng nhập xong và bấm OK
+    if (login->exec() == QDialog::Accepted) {
+        // Lấy quyền và mở trang chính
+        MainWindow* w = new MainWindow(login->getRole());
+
+        // KẾT NỐI: Nếu trang chính phát tín hiệu Đăng xuất -> Đóng nó lại và mở Login
+        connect(w, &MainWindow::logoutRequested, [this, w]() {
+            w->close();
+            w->deleteLater();
+            this->showLogin(); // Gọi lại màn hình login
+        });
+
+        w->show();
+    } else {
+        // Nếu bấm dấu X tắt cửa sổ Login -> Thoát hoàn toàn
+        std::exit(0);
+    }
+    login->deleteLater();
+}
+#include "Book.h"
+
+// Cài đặt Constructor mặc định
+Book::Book() : quantity(0), price(0.0) {}
+
+// Cài đặt Constructor có tham số
+Book::Book(QString id, QString title, QString author, int quantity, double price)
+    : id(id), title(title), author(author), quantity(quantity), price(price) {}
+
+// Cài đặt Getters
+QString Book::getId() const { return id; }
+QString Book::getTitle() const { return title; }
+QString Book::getAuthor() const { return author; }
+int Book::getQuantity() const { return quantity; }
+double Book::getPrice() const { return price; }
+
+// Cài đặt Setters
+void Book::setQuantity(int newQuantity) { quantity = newQuantity; }
+void Book::setPrice(double newPrice) { price = newPrice; }
+#include "InventoryManager.h"
+#include <QFile>
+#include <QTextStream>
+#include <QStringList>
+
+InventoryManager::InventoryManager() {}
+
+void InventoryManager::addBook(const Book& newBook) {
+    // Tạm thời cứ thêm thẳng vào cuối danh sách
+    bookList.append(newBook);
+}
+
+bool InventoryManager::removeBook(const QString& id) {
+    for (int i = 0; i < bookList.size(); ++i) {
+        if (bookList[i].getId() == id) {
+            bookList.removeAt(i);
+            return true; // Xóa thành công
+        }
+    }
+    return false; // Không tìm thấy sách để xóa
+}
+
+Book* InventoryManager::findBookById(const QString& id) {
+    for (int i = 0; i < bookList.size(); ++i) {
+        if (bookList[i].getId() == id) {
+            return &bookList[i];
+        }
+    }
+    return nullptr; // Không tìm thấy
+}
+
+QVector<Book> InventoryManager::getAllBooks() const {
+    return bookList;
+}
+
+// --- GHI DỮ LIỆU RA FILE ---
+void InventoryManager::saveToFile(const QString& fileName) {
+    QFile file(fileName);
+    // Mở file ở chế độ Ghi đè (WriteOnly) và dạng Text
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&file);
+        for (int i = 0; i < bookList.size(); ++i) {
+            // Lưu mỗi cuốn sách trên 1 dòng, cách nhau bởi dấu gạch đứng "|"
+            out << bookList[i].getId() << "|" 
+                << bookList[i].getTitle() << "|" 
+                << bookList[i].getAuthor() << "|" 
+                << bookList[i].getQuantity() << "|" 
+                << bookList[i].getPrice() << "\n";
+        }
+        file.close();
+    }
+}
+
+// --- ĐỌC DỮ LIỆU TỪ FILE ---
+void InventoryManager::loadFromFile(const QString& fileName) {
+    QFile file(fileName);
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        bookList.clear(); // Xóa sạch kho cũ trước khi nạp dữ liệu mới
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            QStringList parts = line.split("|"); // Cắt dòng text ra thành các phần
+            if (parts.size() == 5) { // Phải đủ 5 thông tin mới nạp vào
+                bookList.append(Book(parts[0], parts[1], parts[2], parts[3].toInt(), parts[4].toDouble()));
+            }
+        }
+        file.close();
+    }
+}
+
+bool InventoryManager::updateBook(const QString& id, const Book& newBook) {
+    for (int i = 0; i < bookList.size(); ++i) {
+        if (bookList[i].getId() == id) {
+            bookList[i] = newBook; // Ghi đè dữ liệu mới
+            return true;
+        }
+    }
+    return false;
+}
+#include "LoginDialog.h"
+
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QMessageBox>
+#include <QScreen>
+#include <QGuiApplication>
+#include <QGraphicsDropShadowEffect>
+#include <QEvent>
+#include <QPalette>
+
+LoginDialog::LoginDialog(QWidget *parent) : QDialog(parent) {
+    setupUI();
+}
+
+void LoginDialog::setupUI() {
+    setWindowTitle("Hệ thống FETEL - Đăng nhập");
+    setFixedSize(350, 260); 
+
+    QRect screenGeom = QGuiApplication::primaryScreen()->geometry();
+    move((screenGeom.width() - width()) / 2, (screenGeom.height() - height()) / 2);
+
+    QVBoxLayout *layout = new QVBoxLayout(this);
+    layout->setSpacing(15);
+
+    QLabel *logo = new QLabel("🚀 HỆ THỐNG FETEL PRO");
+    logo->setStyleSheet("background-color: transparent; font-size: 20px; font-weight: bold; color: #0088CC;"); 
+    logo->setAlignment(Qt::AlignCenter);
+
+    QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(this);
+    shadow->setBlurRadius(6); 
+    shadow->setColor(QColor(0, 0, 0, 90)); 
+    shadow->setOffset(1, 2);
+    logo->setGraphicsEffect(shadow);
+
+    txtUser = new QLineEdit();
+    txtUser->setPlaceholderText("Tên đăng nhập (Gợi ý: admin)");
+
+    txtPass = new QLineEdit();
+    txtPass->setPlaceholderText("Mật khẩu (Gợi ý: 123)");
+    txtPass->setEchoMode(QLineEdit::Password);
+
+    btnLogin = new QPushButton("VÀO HỆ THỐNG");
+    btnLogin->setStyleSheet("background-color: #0088CC; color: white; padding: 12px; font-weight: bold; border-radius: 5px;");
+
+    layout->addWidget(logo);
+    layout->addSpacing(10);
+    layout->addWidget(txtUser);
+    layout->addWidget(txtPass);
+    layout->addSpacing(10);
+    layout->addWidget(btnLogin);
+
+    // KÍCH HOẠT THEME NGAY KHI VỪA TẠO XONG GIAO DIỆN
+    updateTheme();
+
+    connect(btnLogin, &QPushButton::clicked, this, &LoginDialog::handleLogin);
+}
+
+void LoginDialog::handleLogin() {
+    QString u = txtUser->text();
+    QString p = txtPass->text();
+
+    if (u == "admin" && p == "123") {
+        userRole = "Admin"; // Gắn mác Giám đốc
+        accept();
+    } 
+    else if (u == "staff" && p == "123") {
+        userRole = "Staff"; // Gắn mác Nhân viên
+        accept();
+    } 
+    else {
+        QMessageBox::critical(this, "Từ chối truy cập", "Sai tên đăng nhập hoặc mật khẩu!\nVui lòng thử lại.");
+    }
+}
+
+void LoginDialog::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::PaletteChange || 
+        event->type() == QEvent::ApplicationPaletteChange || 
+        event->type() == QEvent::ThemeChange) {
+        updateTheme();
+    }
+    QDialog::changeEvent(event);
+}
+
+void LoginDialog::updateTheme() {
+    // Nếu các ô nhập liệu chưa được tạo ra thì hủy lệnh đổi màu ngay!
+    if (!txtUser || !txtPass) return;
+
+    // Quét độ sáng của OS
+    bool isDark = QGuiApplication::palette().color(QPalette::Window).lightness() < 128;
+
+    // Pha màu động cho ô nhập liệu (Input)
+    QString inputBg = isDark ? "#161B22" : "#FFFFFF"; // Nền đen/trắng tùy Theme
+    QString textColor = isDark ? "#C9D1D9" : "#2D3748"; // Chữ trắng/đen tùy Theme
+
+    // Áp dụng QSS cho các ô nhập
+    QString lineEditQss = QString("padding: 10px; border: 1px solid #0088CC; border-radius: 5px; font-size: 14px; background-color: %1; color: %2;")
+                          .arg(inputBg, textColor);
+    
+    txtUser->setStyleSheet(lineEditQss);
+    txtPass->setStyleSheet(lineEditQss);
+
+    // Ép màu nền chuẩn cho Dialog (Tránh việc Qt trên Windows bắt màu nền bị lỗi nửa mùa)
+    this->setStyleSheet(isDark ? "background-color: #0D1117;" : "background-color: #F8F9FA;");
+}
+#include <QApplication>
+#include "AppController.h"
+
+int main(int argc, char *argv[]) {
+    QApplication a(argc, argv);
+
+    // Ủy quyền toàn bộ luồng chạy cho AppController
+    AppController app;
+    app.start();
+
+    return a.exec();
+}
 #include "MainWindow.h"
 #include "Customer.h"
 
@@ -39,18 +564,11 @@ QLocale locale(QLocale::Vietnamese, QLocale::Vietnam);
 
 MainWindow::MainWindow(QString role, QWidget *parent) : QWidget(parent), currentUserRole(role) {
     setWindowTitle("FETEL - Hệ thống Quản trị");
-    
-    // --- CĂN GIỮA VÀ CHỐNG TRÀN MÀN HÌNH TỰ ĐỘNG ---
-    QRect screenGeom = QGuiApplication::primaryScreen()->availableGeometry();
-    
-    // So sánh: Nếu màn hình nhỏ hơn 1200x800 thì tự bóp lại, trừ hao 80px để có khoảng thở
-    int appWidth = qMin(1200, screenGeom.width() - 80);
-    int appHeight = qMin(800, screenGeom.height() - 80);
-    resize(appWidth, appHeight);
+    resize(1200, 800);
 
-    // Tính toán lại tọa độ X, Y dựa trên kích thước mới
-    int x = screenGeom.x() + (screenGeom.width() - appWidth) / 2;
-    int y = screenGeom.y() + (screenGeom.height() - appHeight) / 2;
+    QRect screenGeom = QGuiApplication::primaryScreen()->geometry();
+    int x = (screenGeom.width() - width()) / 2;
+    int y = (screenGeom.height() - height()) / 2;
     move(x, y);
 
     setupUI(); // Gọi hàm tạo giao diện
@@ -85,27 +603,22 @@ MainWindow::MainWindow(QString role, QWidget *parent) : QWidget(parent), current
 }
 
 void MainWindow::setupUI() {
-    // 1. TẠO KHUNG SIDEBAR CHỨA MENU VÀ NÚT ĐĂNG XUẤT
-    QFrame *sidebarFrame = new QFrame();
-    sidebarFrame->setFixedWidth(250);
-    QVBoxLayout *sidebarLayout = new QVBoxLayout(sidebarFrame);
-    sidebarLayout->setContentsMargins(0, 0, 0, 0); // Bỏ viền
-    sidebarLayout->setSpacing(0);
-
+    // 1. TẠO THANH MENU BÊN TRÁI
     sideMenu = new QListWidget();
+    sideMenu->setFixedWidth(250);
+    
+    // Thêm các mục vào menu (Icon + Chữ sau này có thể thêm sau, giờ dùng chữ trước)
     sideMenu->addItem("📊 Tổng quan (Dashboard)");
     sideMenu->addItem("📦 Quản lý Kho sách");
     sideMenu->addItem("🛒 Bán hàng (POS)");
-    sideMenu->addItem("📈 Báo cáo & Thống kê");
+
+    // mới thêm 27/04
+    sideMenu->addItem("📈 Báo cáo & Thống kê"); // <--- THÊM DÒNG NÀY (Menu thứ 4)
+    // mới thêm 27/04
+
     sideMenu->addItem("⚙️ Cài đặt hệ thống");
 
-    // Tạo nút Đăng xuất độc lập, đẩy xuống đáy
-    QPushButton *btnLogout = new QPushButton("  🚪 ĐĂNG XUẤT");
-    btnLogout->setObjectName("BtnLogout"); // Đặt tên để xíu nữa CSS tô màu
-    btnLogout->setCursor(Qt::PointingHandCursor);
-
-    sidebarLayout->addWidget(sideMenu);
-    sidebarLayout->addWidget(btnLogout); // Nằm dưới cùng
+    sideMenu->addItem("🚪 ĐĂNG XUẤT");
 
     // 2. TẠO KHU VỰC CHỨA CÁC TRANG (STACKED WIDGET)
     stackedPages = new QStackedWidget();
@@ -114,38 +627,35 @@ void MainWindow::setupUI() {
     stackedPages->addWidget(createDashboardPage());
     stackedPages->addWidget(createInventoryPage());
     stackedPages->addWidget(createSalesPage());
-    stackedPages->addWidget(createReportPage());
+
+// mới thêm 27/04
+    stackedPages->addWidget(createReportPage()); // <--- THÊM DÒNG NÀY (Trang Báo cáo)
+// mới thêm 27/04
+
     stackedPages->addWidget(createSettingsPage());
 
-    // 3. KẾT NỐI SỰ KIỆN MENU
+
+    // 3. KẾT NỐI MENU VỚI TRANG
+    // Khi người dùng bấm vào 1 dòng trên menu, trang tương ứng bên phải sẽ hiện ra
     connect(sideMenu, &QListWidget::currentRowChanged, this, [this](int row) {
-        if (row >= 0) stackedPages->setCurrentIndex(row);
-    });
-
-    // Sự kiện Nút Đăng xuất riêng biệt (Đã Việt hóa hoàn toàn)
-    connect(btnLogout, &QPushButton::clicked, this, [this]() {
-        QMessageBox msgBox(this);
-        msgBox.setWindowTitle("Xác nhận");
-        msgBox.setText("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống FETEL?");
-        msgBox.setIcon(QMessageBox::Question);
-        
-        // Thêm nút bấm Tiếng Việt
-        QPushButton *btnYes = msgBox.addButton("🚪 Đăng xuất", QMessageBox::YesRole);
-        msgBox.addButton("❌ Hủy", QMessageBox::NoRole);
-        
-        msgBox.exec(); 
-        if (msgBox.clickedButton() == btnYes) {
-            emit logoutRequested();
-        }
-        // Nếu bấm Hủy, menu vẫn giữ nguyên vị trí cũ, không bị lỗi sáng đèn!
-    });
-
-    // 4. BỐ CỤC TỔNG THỂ (Thay vì add sideMenu, giờ ta add cái sidebarFrame)
+            if (row == 5) { // Dòng thứ 6 (index 5) là nút Đăng xuất
+                auto reply = QMessageBox::question(this, "Xác nhận", "Bạn có muốn đăng xuất khỏi hệ thống FETEL?", 
+                                                QMessageBox::Yes | QMessageBox::No);
+                if (reply == QMessageBox::Yes) {
+                    emit logoutRequested(); // Phát tín hiệu Đăng xuất!
+                } else {
+                    sideMenu->setCurrentRow(0); // Bấm No thì quay về Dashboard
+                }
+            } else {
+                stackedPages->setCurrentIndex(row);
+            }
+        });
+    
+    // 4. BỐ CỤC TỔNG THỂ CỬA SỔ (Chia đôi màn hình Trái - Phải)
     QHBoxLayout *mainLayout = new QHBoxLayout(this);
-    mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->addWidget(sidebarFrame);
+    mainLayout->addWidget(sideMenu);
     mainLayout->addWidget(stackedPages);
-
+    
     // Mặc định chọn dòng đầu tiên (Dashboard) khi vừa mở app
     sideMenu->setCurrentRow(0); 
 }
@@ -485,14 +995,14 @@ QWidget* MainWindow::createReportPage() {
 
     // Tiêu đề tổng
     QLabel* title = new QLabel("<b>BÁO CÁO & THỐNG KÊ</b>");
-    title->setStyleSheet("font-size: 22px; margin-bottom: 10px;"); // Bỏ color: #2C3E50
+    title->setStyleSheet("font-size: 22px; color: #2C3E50; margin-bottom: 10px;");
     
     lblTotalBooks = new QLabel("Tổng số sách trong kho: 0");
-    lblTotalBooks->setStyleSheet("font-size: 16px;"); // Bỏ color: #34495e
-
+    lblTotalBooks->setStyleSheet("font-size: 16px; color: #34495e;");
+    
     lblTotalValue = new QLabel("Tổng giá trị kho hàng: 0 VNĐ");
-    lblTotalValue->setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 15px;"); // Bỏ color: #c0392b
-
+    lblTotalValue->setStyleSheet("font-size: 16px; color: #c0392b; font-weight: bold; margin-bottom: 15px;");
+    
     reportLayout->addWidget(title);
     reportLayout->addWidget(lblTotalBooks);
     reportLayout->addWidget(lblTotalValue);
@@ -503,7 +1013,7 @@ QWidget* MainWindow::createReportPage() {
     // --- CỘT TRÁI: Bảng sách sắp hết ---
     QVBoxLayout* leftCol = new QVBoxLayout();
     QLabel* subTitle = new QLabel("⚠️ Sách sắp hết hàng (Tồn kho < 10):");
-    subTitle->setStyleSheet("font-size: 16px; font-weight: bold;"); // Bỏ color: #d35400
+    subTitle->setStyleSheet("font-size: 16px; color: #d35400; font-weight: bold;");
     
     tableLowStock = new QTableWidget(0, 3);
     tableLowStock->setHorizontalHeaderLabels({"Mã sách", "Tên sách", "Tồn kho"});
@@ -529,7 +1039,7 @@ QWidget* MainWindow::createReportPage() {
     rightCol->setAlignment(Qt::AlignTop); // Đẩy các phần tử lên trên cùng
     
     QLabel* rightTitle = new QLabel("📈 Kết Quả Kinh Doanh");
-    rightTitle->setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 10px;"); // Bỏ color: #2C3E50
+    rightTitle->setStyleSheet("font-size: 18px; color: #2C3E50; font-weight: bold; margin-bottom: 10px;");
     
     lblTotalSold = new QLabel("0");
     lblTotalRevenue = new QLabel("0 VNĐ");
@@ -1732,7 +2242,7 @@ void MainWindow::refreshReportData() {
             tableLowStock->setItem(row, 0, new QTableWidgetItem(book.getId()));
             tableLowStock->setItem(row, 1, new QTableWidgetItem(book.getTitle()));
             QTableWidgetItem* qtyItem = new QTableWidgetItem(QString::number(book.getQuantity()));
-            qtyItem->setForeground(QBrush(QColor("#FF5252")));
+            qtyItem->setForeground(QBrush(Qt::red)); 
             qtyItem->setTextAlignment(Qt::AlignCenter); 
             tableLowStock->setItem(row, 2, qtyItem);
             row++;
@@ -1868,21 +2378,22 @@ void MainWindow::changeEvent(QEvent *event) {
 }
 
 void MainWindow::updateTheme() {
-    // 🛡️ KHIÊN CHỐNG ĐỆ QUY VÔ HẠN
-    static bool isUpdating = false;
-    if (isUpdating) return;
-    isUpdating = true;
-
+    // 1. Máy quét Theme: Kiểm tra độ sáng của màu nền Hệ điều hành
     bool isDark = QGuiApplication::palette().color(QPalette::Window).lightness() < 128;
 
+    // 2. ÉP BIỂU ĐỒ (QCHART) ĐỔI MÀU THEO [cite: 34]
     if (inventoryChart) {
+        // Có sẵn bộ theme chuẩn của Qt cho Chart
         inventoryChart->setTheme(isDark ? QChart::ChartThemeDark : QChart::ChartThemeLight);
+        // TUYỆT CHIÊU: Xóa phông nền cứng của Chart để nó chìm mượt vào màu nền cửa sổ
         inventoryChart->setBackgroundVisible(false); 
     }
 
+    // 3. PHA MÀU (Biến số động dựa trên kết quả máy quét)
     QString textColor = isDark ? "#C9D1D9" : "#2D3748"; 
-    QString cardBg = isDark ? "rgba(22, 27, 34, 0.6)" : "rgba(255, 255, 255, 0.6)"; 
+    QString cardBg = isDark ? "rgba(22, 27, 34, 0.6)" : "rgba(255, 255, 255, 0.6)"; // Nền thẻ bán trong suốt 60%
 
+    // 4. BƠM QSS (Ghi đè lại toàn bộ CSS bằng chuỗi động)
     QString qss = QString(R"(
         /* Menu Bên Trái */
         QListWidget {
@@ -1903,39 +2414,46 @@ void MainWindow::updateTheme() {
             border-radius: 10px; border: 1px solid #0088CC;
         }
 
-        /* THUỐC TRỊ BỆNH CHO BẢNG */
+        /* THUỐC TRỊ BỆNH CHO BẢNG: Ép nó trong suốt và đổi màu chữ tự động */
         QTableWidget {
             background-color: transparent;
             color: %1;
-            alternate-background-color: rgba(0, 136, 204, 0.05); 
+            alternate-background-color: rgba(0, 136, 204, 0.05); /* Sọc ngựa vằn nhẹ */
             border: none;
         }
+        /* Đầu trang của bảng */
         QHeaderView::section {
             background-color: rgba(0, 136, 204, 0.1);
             color: #0088CC; font-weight: bold;
             border: none; border-bottom: 2px solid #0088CC;
             padding: 5px;
         }
+        
+        /* Chữ tự động đổi màu */
         QLabel { color: %1; }
-        QPushButton#BtnLogout {
-            background-color: transparent;
-            text-align: left;
-            padding: 15px 20px;
-            font-size: 15px;
-            font-weight: bold;
-            border: none;
-            border-top: 1px solid rgba(0, 136, 204, 0.3); /* Đường kẻ mỏng ở trên */
-            border-right: 1px solid #0088CC;
-            color: %1;
-        }
-        QPushButton#BtnLogout:hover {
-            background-color: rgba(220, 53, 69, 0.1); /* Nền đỏ nhạt */
-            color: #DC3545; /* Chữ đỏ báo hiệu nguy hiểm */
-            border-left: 5px solid #DC3545;
-        }
     )").arg(textColor, cardBg);
 
+    // Áp dụng bộ áo mới!
     this->setStyleSheet(qss);
+}
+#include "ReportManager.h"
+#include "Book.h"
 
-    isUpdating = false; // 🔓 Xong việc thì mở khóa ra
+ReportManager::ReportManager(InventoryManager* inv) : inventory(inv) {}
+
+int ReportManager::getTotalBooksInStock() {
+    int total = 0;
+    // Giả sử InventoryManager có hàm getBooks() trả về vector/list các Book
+    // for (const auto& book : inventory->getBooks()) {
+    //     total += book.getQuantity(); 
+    // }
+    return total; 
+}
+
+double ReportManager::getTotalInventoryValue() {
+    double totalValue = 0.0;
+    // for (const auto& book : inventory->getBooks()) {
+    //     totalValue += (book.getQuantity() * book.getPrice());
+    // }
+    return totalValue;
 }

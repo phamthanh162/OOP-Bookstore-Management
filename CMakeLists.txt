@@ -18,26 +18,11 @@ set(Qt6_DIR "C:/msys64/ucrt64/lib/cmake/Qt6")
 # Tìm kiếm và nạp các module bắt buộc của Qt6 (Widgets cho giao diện, Charts cho biểu đồ)
 find_package(Qt6 REQUIRED COMPONENTS Widgets Charts)
 
-# Quản lý danh sách các file mã nguồn (.cpp)
-set(SOURCES
-    src/main.cpp
-    src/Book.cpp
-    src/Customer.cpp
-    src/InventoryManager.cpp
-    src/ReportManager.cpp
-    src/MainWindow.cpp
-    src/LoginDialog.cpp
-)
+# Tự động quét toàn bộ file .cpp trong thư mục src
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 
-# Quản lý danh sách các file header (.h)
-set(HEADERS
-    include/Book.h
-    include/Customer.h
-    include/InventoryManager.h
-    include/ReportManager.h
-    include/MainWindow.h
-    include/LoginDialog.h
-)
+# Tự động quét toàn bộ file .h trong thư mục include
+file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS "include/*.h")
 
 # Khởi tạo mục tiêu biên dịch (file thực thi) từ các file nguồn và header
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
