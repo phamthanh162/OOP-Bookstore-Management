@@ -15,7 +15,7 @@ void LoginDialog::setupUI() {
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->setSpacing(15);
 
-    QLabel *logo = new QLabel("📚 ĐĂNG NHẬP FAHASA");
+    QLabel *logo = new QLabel("📚 ĐĂNG NHẬP FETEL");
     logo->setStyleSheet("font-size: 20px; font-weight: bold; color: #C92127;");
     logo->setAlignment(Qt::AlignCenter);
 
