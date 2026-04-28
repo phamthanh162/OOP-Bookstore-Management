@@ -138,7 +138,7 @@ MainWindow::MainWindow(QString role, QWidget *parent) : QWidget(parent), current
     }
 
     // --- NẠP DỮ LIỆU KHI MỞ APP ---
-    manager.loadFromFile("database_sach.txt");
+    manager.loadFromFile("datafiles/db_books.txt");
     refreshInventoryTable(); 
 }
 
@@ -453,7 +453,7 @@ QWidget* MainWindow::createInventoryPage() {
         // CHÈN THÊM ĐOẠN NÀY: TẠO FILE PHIẾU NHẬP KHI THÊM SÁCH
         // =========================================================
         QString pnId = "PN" + QDateTime::currentDateTime().toString("yyMMdd_HHmmss");
-        QFile pnFile(pnId + ".txt");
+        QFile pnFile("datafiles/" + pnId + ".txt");
         if (pnFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream out(&pnFile);
             out << "Ma Phieu: " << pnId << "\n";
@@ -910,7 +910,7 @@ QWidget* MainWindow::createSalesPage() {
 
 // mới thêm 27/04
 // 3. XUẤT RA FILE TXT
-        QFile billFile(billId + ".txt");
+        QFile billFile("datafiles/" + billId + ".txt");
         if (billFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream out(&billFile);
             out << billContent; // Bơm toàn bộ nội dung hóa đơn vào file
@@ -930,7 +930,7 @@ QWidget* MainWindow::createSalesPage() {
             int oldPoints = 0;
 
             // 1. Quét danh sách cũ để tìm khách này có bao nhiêu điểm rồi
-            QFile readFile("customers.txt");
+            QFile readFile("datafiles/db_customers.txt");
             if (readFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
                 QTextStream in(&readFile);
                 while (!in.atEnd()) {
@@ -954,7 +954,7 @@ QWidget* MainWindow::createSalesPage() {
             int newTotalPoints = oldPoints + earnedPoints; // Cộng dồn
 
             // 3. Ghi đè file với số điểm đã được cập nhật
-            QFile writeFile("customers.txt");
+            QFile writeFile("datafiles/db_customers.txt");
             if (writeFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
                 QTextStream out(&writeFile);
                 for (const QString& l : lines) {
@@ -1005,7 +1005,7 @@ QWidget* MainWindow::createSalesPage() {
 
                 // Lưu thẻ
                 QString fileName = "Auto_White_Diamond_" + customerPhone + ".png";
-                card.save(fileName);
+                card.save("datafiles/" + fileName);
                 
                 // Bật Popup ăn mừng (Tui đã dặn ở Phase 1 là ép CSS cho nó trắng rồi đó)
                 QMessageBox::information(this, "🎉 CHÚC MỪNG LÊN HẠNG!", 
@@ -1027,7 +1027,7 @@ QWidget* MainWindow::createSalesPage() {
 
         if (!customerPhone.isEmpty()) {
             // 1. Mở file khách hàng ở chế độ Append (Ghi thêm vào cuối)
-            QFile file("customers.txt");
+            QFile file("datafiles/db_customers.txt");
             if (file.open(QIODevice::Append | QIODevice::Text)) {
                 QTextStream out(&file);
                 // Lưu tạm định dạng: SĐT | Điểm (mặc định cho 10 điểm mỗi đơn)
@@ -1049,7 +1049,7 @@ QWidget* MainWindow::createSalesPage() {
         int currentPoints = 0;
 
         // Mở file ra quét từng dòng
-        QFile file("customers.txt");
+        QFile file("datafiles/db_customers.txt");
         if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             QTextStream in(&file);
             while (!in.atEnd()) {
@@ -1122,7 +1122,7 @@ QWidget* MainWindow::createSalesPage() {
         }
 
         // 1. GHI DATABASE: Tặng thẳng 3000 điểm để lên mốc Kim Cương!
-        QFile file("customers.txt");
+        QFile file("datafiles/db_customers.txt");
         if (file.open(QIODevice::Append | QIODevice::Text)) {
             QTextStream out(&file);
             out << phone << "|3000\n"; 
@@ -1215,7 +1215,7 @@ QWidget* MainWindow::createSalesPage() {
         QString code = txtVoucher->text().trimmed();
         if(code.isEmpty()) return;
         
-        QFile file("vouchers.txt"); // Đọc file chứa voucher
+        QFile file("datafiles/db_vouchers.txt"); // Đọc file chứa voucher
         bool found = false;
         if(file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             QTextStream in(&file);
@@ -1354,7 +1354,7 @@ QWidget* MainWindow::createSettingsPage() {
     });
     
     // Bấm nút Tuyển nhân viên
-    connect(btnAddStaff, &QPushButton::clicked, this, [=]() {
+    connect(btnAddStaff, &QPushButton::clicked, this, [=, this]() {
         if(txtStaffId->text().isEmpty() || txtStaffName->text().isEmpty()) {
             QMessageBox::warning(this, "Lỗi", "Chưa nhập đủ thông tin mà đòi tuyển à? Vui lòng nhập Mã và Tên nhân viên!");
             return;
@@ -1366,7 +1366,7 @@ QWidget* MainWindow::createSettingsPage() {
     });
 
     // Bấm nút Sa thải
-    connect(btnDeleteStaff, &QPushButton::clicked, this, [=]() {
+    connect(btnDeleteStaff, &QPushButton::clicked, this, [=, this]() {
         int r = staffTable->currentRow();
         if(r < 0) {
             QMessageBox::warning(this, "Lỗi", "Vui lòng click chọn một nhân viên trên bảng để sa thải!");
@@ -1431,7 +1431,7 @@ void MainWindow::refreshInventoryTable() {
 
 
     // --- LƯU TỰ ĐỘNG ---
-    manager.saveToFile("database_sach.txt"); // <--- CHÈN THÊM DÒNG NÀY Ở CUỐI CÙNG
+    manager.saveToFile("datafiles/db_books.txt");
 }
 
 
@@ -1481,7 +1481,7 @@ void MainWindow::loadSalesHistory() {
     if (!recentSalesTable) return;
     recentSalesTable->setRowCount(0); // Xóa trắng bảng cũ
 
-    QDir dir("."); // Quét thư mục hiện tại (thư mục build)
+    QDir dir("datafiles"); // Quét thư mục hiện tại (thư mục build)
     QStringList filters;
     filters << "HD*.txt"; // Chỉ tìm file có tên bắt đầu bằng "HD" và đuôi ".txt"
     
@@ -1547,7 +1547,7 @@ void MainWindow::updateDashboardStats() {
 // =========================================================
     // 2. TÍNH TỔNG HÓA ĐƠN (Đếm số lượng file bắt đầu bằng HD)
     // =========================================================
-    QDir dir(".");
+    QDir dir("datafiles");
     QStringList filters;
     filters << "HD*.txt";
     
@@ -1562,7 +1562,7 @@ void MainWindow::updateDashboardStats() {
     // 3. TÍNH TỔNG KHÁCH HÀNG (Đếm số dòng trong customers.txt)
     // =========================================================
     int totalCustomers = 0;
-    QFile file("customers.txt");
+    QFile file("datafiles/db_customers.txt");
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QTextStream in(&file);
         while (!in.atEnd()) {
@@ -1691,7 +1691,7 @@ void MainWindow::loadSalesHistory() {
     if (!recentSalesTable) return;
     recentSalesTable->setRowCount(0); // Xóa trắng bảng cũ
 
-    QDir dir("."); 
+    QDir dir("datafiles"); 
     QStringList filters;
     filters << "HD*.txt"; 
     QFileInfoList files = dir.entryInfoList(filters, QDir::Files, QDir::Time); 
@@ -1785,7 +1785,7 @@ void MainWindow::refreshReportData() {
     int totalSold = 0;
     double totalRevenue = 0.0;
 
-    QDir dir(".");
+    QDir dir("datafiles");
     QStringList filters;
     filters << "HD*.txt";
     QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
@@ -1852,7 +1852,7 @@ void MainWindow::loadImportHistory() {
     if (!recentImportsTable) return;
     recentImportsTable->setRowCount(0); // Xóa trắng bảng cũ
 
-    QDir dir(".");
+    QDir dir("datafiles");
     QStringList filters;
     filters << "PN*.txt"; // Chỉ quét các file bắt đầu bằng "PN" (Phiếu Nhập)
     QFileInfoList files = dir.entryInfoList(filters, QDir::Files, QDir::Time); 

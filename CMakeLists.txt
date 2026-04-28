@@ -55,5 +55,5 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     "${CMAKE_CURRENT_SOURCE_DIR}/datafiles"
     "${CMAKE_CURRENT_BINARY_DIR}/datafiles"
-    COMMENT "Đang sao chép thư mục datafiles sang thư mục build..."
+    COMMENT "Copying datafiles directory to build output..."
 )
