@@ -613,8 +613,8 @@ QWidget* MainWindow::createSalesPage() {
         QTextStream stream(&billContent);
         
         stream << "================================================\n";
-        stream << "             NHA SACH PHU THANH PRO             \n";
-        stream << "           Khu Cong Nghe Cao, TP.HCM            \n";
+        stream << "             NHÀ SÁCH FETEL PRO             \n";
+        stream << "    227 đường Nguyễn Văn Cừ, Quận 5, TP.HCM            \n";
         stream << "================================================\n";
         stream << "Ma HD: " << billId << "\n";
         stream << "Ngay in: " << QDateTime::currentDateTime().toString("dd/MM/yyyy HH:mm:ss") << "\n";
