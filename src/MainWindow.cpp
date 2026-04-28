@@ -1347,7 +1347,8 @@ QWidget* MainWindow::createSettingsPage() {
 
     // Đổ sẵn 2 nhân viên cứng của tiệm vào
     addStaffToTable("NV01", "Phạm Phú Thành", "Quản trị viên (Admin)");
-    addStaffToTable("NV02", "Trần Thị Thu Ngân", "Nhân viên Bán hàng");
+
+    addStaffToTable("NV03", "Trần Thị Thu Ngân", "Nhân viên Bán hàng");
 
     // Bấm nút Lưu Cửa hàng
     connect(btnSaveStore, &QPushButton::clicked, this, [this]() {
