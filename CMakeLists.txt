@@ -1,36 +1,59 @@
 cmake_minimum_required(VERSION 3.16)
-project(DOAN_OOP VERSION 1.0.0 LANGUAGES CXX)
+project(OOP_Bookstore_Management VERSION 1.0.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+# Thiết lập chuẩn ngôn ngữ C++26 và bắt buộc trình biên dịch phải tuân thủ
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Kích hoạt các công cụ tự động của Qt (Meta-Object, UI, Resource)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-# Chỉ định chính xác thư mục chứa file Qt6Config.cmake
+# Chỉ định đường dẫn gốc để CMake tìm kiếm thư viện Qt6 trên hệ thống MSYS2
 set(CMAKE_PREFIX_PATH "C:/msys64/ucrt64")
+# CỰC KỲ QUAN TRỌNG: Chỉ đích danh thư mục chứa file cấu hình Qt6Config.cmake
 set(Qt6_DIR "C:/msys64/ucrt64/lib/cmake/Qt6")
 
-# Thêm chữ Charts vào cuối
+# Tìm kiếm và nạp các module bắt buộc của Qt6 (Widgets cho giao diện, Charts cho biểu đồ)
 find_package(Qt6 REQUIRED COMPONENTS Widgets Charts)
 
-# GOM TẤT CẢ FILE .cpp VÀO 1 LỆNH DUY NHẤT
-add_executable(DOAN_OOP
+# Quản lý danh sách các file mã nguồn (.cpp)
+set(SOURCES
     src/main.cpp
-    src/Book.cpp                 
-    src/InventoryManager.cpp   
-    src/MainWindow.cpp           # <--- Thêm dòng này vào  
-    src/LoginDialog.cpp   # <--- THÊM DÒNG NÀY
-    include/MainWindow.h         # <--- Thêm dòng này để ép CMake phải đọc nó
-    include/LoginDialog.h # <--- THÊM DÒNG NÀY LUÔN CHO CHẮC
-
-    # mới thêm 27/04
-    src/ReportManager.cpp   # <--- Thêm dòng này
-    include/ReportManager.h # <--- Thêm dòng này
-    # mới thêm 27/04
+    src/Book.cpp
+    src/Customer.cpp
+    src/InventoryManager.cpp
+    src/ReportManager.cpp
+    src/MainWindow.cpp
+    src/LoginDialog.cpp
 )
 
-target_include_directories(DOAN_OOP PRIVATE include)
-# Thêm Qt6::Charts vào
-target_link_libraries(DOAN_OOP PRIVATE Qt6::Widgets Qt6::Charts)
+# Quản lý danh sách các file header (.h)
+set(HEADERS
+    include/Book.h
+    include/Customer.h
+    include/InventoryManager.h
+    include/ReportManager.h
+    include/MainWindow.h
+    include/LoginDialog.h
+)
+
+# Khởi tạo mục tiêu biên dịch (file thực thi) từ các file nguồn và header
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+
+# Chỉ định thư mục include để trình biên dịch có thể tìm thấy các file header
+target_include_directories(${PROJECT_NAME} PRIVATE include)
+
+# Liên kết file thực thi với các thư viện Qt6
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets Qt6::Charts)
+
+# Tự động đồng bộ thư mục dữ liệu sau mỗi lần biên dịch thành công (POST_BUILD)
+# Sao chép toàn bộ nội dung từ thư mục 'datafiles' gốc sang thư mục build
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/datafiles"
+    "${CMAKE_CURRENT_BINARY_DIR}/datafiles"
+    COMMENT "Đang sao chép thư mục datafiles sang thư mục build..."
+)

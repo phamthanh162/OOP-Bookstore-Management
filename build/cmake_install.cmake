@@ -1,8 +1,8 @@
-# Install script for directory: D:/C++/demo_OOP_ban_thu_nghiem_phat_trien
+# Install script for directory: C:/Users/Cheetos/Documents/GitHub/OOP-Bookstore-Management
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/DOAN_OOP")
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/OOP_Bookstore_Management")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -40,7 +40,7 @@ endif()
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/build/install_local_manifest.txt"
+  file(WRITE "C:/Users/Cheetos/Documents/GitHub/OOP-Bookstore-Management/build/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
 if(CMAKE_INSTALL_COMPONENT)
@@ -56,6 +56,6 @@ else()
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/build/${CMAKE_INSTALL_MANIFEST}"
+  file(WRITE "C:/Users/Cheetos/Documents/GitHub/OOP-Bookstore-Management/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

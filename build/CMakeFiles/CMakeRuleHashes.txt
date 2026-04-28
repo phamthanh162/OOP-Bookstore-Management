@@ -1,3 +1,3 @@
 # Hashes of file build rules.
-2c73cdcc9feab5d987504516c4dcf558 CMakeFiles/DOAN_OOP_autogen
-f950f21d09767cfd9ef3b1c2410ff53d DOAN_OOP_autogen/timestamp
+61766769f0acfab4a452d5a6e79a6001 CMakeFiles/OOP_Bookstore_Management_autogen
+8c39b6694f741bfdb0f286c089b3b210 OOP_Bookstore_Management_autogen/timestamp

@@ -1,32 +1,51 @@
-# Prerequisites
-*.d
+# ==========================================
+# 1. THƯ MỤC BIÊN DỊCH CHÍNH (Build & Output)
+# ==========================================
+build/
+out/
 
-# Compiled Object files
-*.slo
-*.lo
+# ==========================================
+# 2. CÁC FILE RÁC DO CMAKE SINH RA (Nếu lỡ build in-source)
+# ==========================================
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+Makefile
+
+# ==========================================
+# 3. FILE KẾT QUẢ BIÊN DỊCH C/C++ (Object & Library)
+# ==========================================
 *.o
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
 *.so
 *.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
 *.a
 *.lib
+*.pch
+*.gch
 
-# Executables
+# ==========================================
+# 4. FILE THỰC THI & LỖI (Executable & Debug)
+# ==========================================
 *.exe
 *.out
 *.app
+*.pdb
+*.ilk
+
+# ==========================================
+# 5. CẤU HÌNH IDE CÁ NHÂN (VS Code & Visual Studio)
+# ==========================================
+.vs/
+.vscode/
+*.user
+*.suo
+*.db
+
+# ==========================================
+# 6. FILE RÁC CỦA HỆ ĐIỀU HÀNH
+# ==========================================
+.DS_Store
+Thumbs.db
