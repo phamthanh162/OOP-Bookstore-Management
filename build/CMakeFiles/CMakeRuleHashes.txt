@@ -1,3 +1,0 @@
-# Hashes of file build rules.
-61766769f0acfab4a452d5a6e79a6001 CMakeFiles/OOP_Bookstore_Management_autogen
-8c39b6694f741bfdb0f286c089b3b210 OOP_Bookstore_Management_autogen/timestamp
