@@ -156,6 +156,10 @@ void MainWindow::setupUI() {
     sideMenu->addItem("📈 Báo cáo & Thống kê"); // <--- THÊM DÒNG NÀY (Menu thứ 4)
     // mới thêm 27/04
 
+// 28/04
+sideMenu->addItem("👥 Quản lý Khách hàng"); // Thêm vào sau Quản lý Kho sách
+// 28/04
+
     sideMenu->addItem("⚙️ Cài đặt hệ thống");
 
     // 2. TẠO KHU VỰC CHỨA CÁC TRANG (STACKED WIDGET)
@@ -170,7 +174,13 @@ void MainWindow::setupUI() {
     stackedPages->addWidget(createReportPage()); // <--- THÊM DÒNG NÀY (Trang Báo cáo)
 // mới thêm 27/04
 
+// 28/04
+stackedPages->addWidget(createCustomerPage());
+// 28/04
+
     stackedPages->addWidget(createSettingsPage());
+
+
 
 
     // 3. KẾT NỐI MENU VỚI TRANG
@@ -811,9 +821,15 @@ QWidget* MainWindow::createSalesPage() {
         updateCartTotal(); // Tính lại tiền
     });
     
-    // SỰ KIỆN 2: Xóa giỏ hàng
+// SỰ KIỆN 2: Xóa giỏ hàng
     connect(btnClearCart, &QPushButton::clicked, this, [this]() {
         cartTable->setRowCount(0);
+        
+        // THÊM 3 DÒNG NÀY ĐỂ RESET VOUCHER
+        txtVoucher->clear();
+        voucherPercent = 0.0;
+        voucherFlat = 0.0;
+        
         updateCartTotal();
     });
     
@@ -1022,20 +1038,20 @@ QWidget* MainWindow::createSalesPage() {
         
         // 4. DỌN DẸP VÀ ĐỒNG BỘ
         cartTable->setRowCount(0);
+
+        // THÊM 3 DÒNG NÀY ĐỂ DỌN VOUCHER VÀ SĐT KHÁCH CŨ
+        txtVoucher->clear();
+        voucherPercent = 0.0;
+        voucherFlat = 0.0;
+        txtCustomerPhone->clear(); // Xóa luôn SĐT để đón khách mới
+        lblCustomerInfo->setText("Khách lẻ (Không có chiết khấu)");
+        currentDiscount = 0.0;
+
         updateCartTotal();
         refreshInventoryTable();  // Cập nhật lại kho
         refreshSalesBookTable();  // Cập nhật lại số lượng hiển thị trên quầy
+        refreshCustomerTable();
 
-        if (!customerPhone.isEmpty()) {
-            // 1. Mở file khách hàng ở chế độ Append (Ghi thêm vào cuối)
-            QFile file("datafiles/db_customers.txt");
-            if (file.open(QIODevice::Append | QIODevice::Text)) {
-                QTextStream out(&file);
-                // Lưu tạm định dạng: SĐT | Điểm (mặc định cho 10 điểm mỗi đơn)
-                out << customerPhone << "|10\n"; 
-                file.close();
-            }
-        }
     });
 
     // SỰ KIỆN 4: Quét SĐT Khách hàng từ file customers.txt
@@ -1220,8 +1236,15 @@ QWidget* MainWindow::createSalesPage() {
     // --- LOGIC XỬ LÝ KHI BẤM NÚT ÁP DỤNG VOUCHER ---
     connect(btnApplyVoucher, &QPushButton::clicked, this, [this]() {
         QString code = txtVoucher->text().trimmed();
-        if(code.isEmpty()) return;
-        
+
+        // NẾU Ô TRỐNG MÀ BẤM ÁP DỤNG -> XÓA VOUCHER ĐANG LƯU
+        if(code.isEmpty()) {
+            voucherPercent = 0.0;
+            voucherFlat = 0.0;
+            updateCartTotal(); // Tự động tính lại tiền về giá gốc
+            return; 
+        }
+
         QFile file("datafiles/db_vouchers.txt"); // Đọc file chứa voucher
         bool found = false;
         if(file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -1896,6 +1919,237 @@ void MainWindow::loadImportHistory() {
             row++;
             if (row >= 10) break; // Hiển thị 10 phiếu gần nhất
         }
+    }
+}
+// 28/04
+
+// 28/04
+QWidget* MainWindow::createCustomerPage() {
+    QWidget *page = new QWidget();
+    QVBoxLayout *mainLayout = new QVBoxLayout(page);
+
+    // 1. Tiêu đề
+    QLabel *lblTitle = new QLabel("👥 Quản lý Khách hàng Thân thiết");
+    lblTitle->setStyleSheet("font-size: 24px; font-weight: bold; color: #2B6CB0; margin-bottom: 10px;");
+    mainLayout->addWidget(lblTitle);
+
+    // 2. Form Nhập liệu
+    QFrame *formFrame = new QFrame();
+    formFrame->setObjectName("ContentCard");
+    QFormLayout *formLayout = new QFormLayout(formFrame);
+    
+    txtCusPhone = new QLineEdit();
+    txtCusPhone->setPlaceholderText("VD: 0987654321");
+    txtCusName = new QLineEdit();
+    txtCusName->setPlaceholderText("Nhập tên khách hàng...");
+    txtCusPoints = new QLineEdit();
+    txtCusPoints->setPlaceholderText("VD: 1500");
+
+    formLayout->addRow("Số điện thoại:", txtCusPhone);
+    formLayout->addRow("Tên khách hàng:", txtCusName);
+    formLayout->addRow("Điểm tích lũy:", txtCusPoints);
+
+    // Cụm nút chức năng
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    QPushButton *btnSaveCus = new QPushButton("💾 Lưu / Cập nhật");
+    QPushButton *btnDeleteCus = new QPushButton("❌ Xóa khách hàng");
+    
+    btnSaveCus->setStyleSheet("background-color: #28A745; color: white; padding: 8px; border-radius: 5px; font-weight: bold;");
+    btnDeleteCus->setStyleSheet("background-color: #DC3545; color: white; padding: 8px; border-radius: 5px; font-weight: bold;");
+    
+    buttonLayout->addWidget(btnSaveCus);
+    buttonLayout->addWidget(btnDeleteCus);
+    formLayout->addRow("", buttonLayout);
+    mainLayout->addWidget(formFrame);
+
+    // 3. Thanh tìm kiếm & Bảng dữ liệu
+    searchCustomerInput = new QLineEdit();
+    searchCustomerInput->setPlaceholderText("🔍 Tìm kiếm theo Số điện thoại hoặc Tên...");
+    searchCustomerInput->setStyleSheet("padding: 10px; border: 2px solid #3182CE; border-radius: 5px; margin-top: 10px;");
+    mainLayout->addWidget(searchCustomerInput);
+
+    customerTable = new QTableWidget(0, 4);
+    customerTable->setHorizontalHeaderLabels({"Số Điện Thoại", "Tên Khách Hàng", "Điểm", "Hạng Thẻ"});
+    customerTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    customerTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    customerTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    mainLayout->addWidget(customerTable);
+
+    // ================= LOGIC SỰ KIỆN =================
+
+    // Load dữ liệu lần đầu
+    refreshCustomerTable();
+
+    // Click vào bảng để nạp lên Form
+    connect(customerTable, &QTableWidget::itemSelectionChanged, this, [this]() {
+        int row = customerTable->currentRow();
+        if (row >= 0) {
+            txtCusPhone->setText(customerTable->item(row, 0)->text());
+            txtCusName->setText(customerTable->item(row, 1)->text());
+            txtCusPoints->setText(customerTable->item(row, 2)->text());
+            txtCusPhone->setReadOnly(true); // Không cho sửa SĐT làm khóa chính
+            txtCusPhone->setStyleSheet("background-color: #E2E8F0; color: gray;");
+        } else {
+            txtCusPhone->clear(); txtCusName->clear(); txtCusPoints->clear();
+            txtCusPhone->setReadOnly(false);
+            txtCusPhone->setStyleSheet("");
+        }
+    });
+
+    // Nút Lưu/Cập nhật (Đọc file -> Xóa dòng cũ nếu có -> Ghi đè vào)
+    connect(btnSaveCus, &QPushButton::clicked, this, [this]() {
+        QString phone = txtCusPhone->text();
+        QString name = txtCusName->text();
+        QString points = txtCusPoints->text();
+        if(phone.isEmpty()) { QMessageBox::warning(this, "Lỗi", "Vui lòng nhập SĐT!"); return; }
+        if(points.isEmpty()) points = "0"; // Nếu quên nhập điểm thì tự cho là 0
+
+        // ======================================================
+        // THÊM ĐOẠN NÀY: NẾU BỎ TRỐNG TÊN -> TỰ ĐỘNG PHÂN LOẠI TÊN
+        // ======================================================
+        if (name.isEmpty()) {
+            if (points.toInt() >= 3000) {
+                name = "Khách hàng VIP (Kim Cương)";
+            } else {
+                name = "Khách hàng Thường";
+            }
+        }
+        // ======================================================
+
+        QList<QString> lines;
+        QFile file("datafiles/db_customers.txt"); // Hoặc datafiles/db_customers.txt tùy cấu trúc của bạn
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream in(&file);
+            while(!in.atEnd()) {
+                QString line = in.readLine();
+                if(!line.startsWith(phone + "|")) { lines.append(line); } // Bỏ qua khách cũ
+            }
+            file.close();
+        }
+        
+        // Thêm dữ liệu mới
+        lines.append(phone + "|" + points + "|" + name); // Format: SĐT|Điểm|Tên
+        
+        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&file);
+            for(const QString& l : lines) out << l << "\n";
+            file.close();
+        }
+        refreshCustomerTable();
+        QMessageBox::information(this, "Xong", "Đã lưu thông tin khách hàng!");
+    });
+
+    // Nút Xóa khách hàng
+    connect(btnDeleteCus, &QPushButton::clicked, this, [this]() {
+        int row = customerTable->currentRow();
+        if (row < 0) {
+            QMessageBox::warning(this, "Lỗi", "Vui lòng chọn 1 khách hàng trên bảng để xóa!");
+            return;
+        }
+        
+        QString phoneToDelete = customerTable->item(row, 0)->text();
+        
+        QMessageBox::StandardButton reply = QMessageBox::question(this, "Xác nhận", 
+            "Bạn có chắc chắn muốn xóa khách hàng " + phoneToDelete + " không?", 
+            QMessageBox::Yes | QMessageBox::No);
+            
+        if (reply == QMessageBox::Yes) {
+            QList<QString> lines;
+            QFile file("datafiles/db_customers.txt");
+            if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                QTextStream in(&file);
+                while(!in.atEnd()) {
+                    QString line = in.readLine();
+                    // Đọc lại file, giữ lại những ai KHÔNG PHẢI là số điện thoại đang cần xóa
+                    if(!line.startsWith(phoneToDelete + "|")) { lines.append(line); }
+                }
+                file.close();
+            }
+            
+            // Ghi đè file mới
+            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                QTextStream out(&file);
+                for(const QString& l : lines) out << l << "\n";
+                file.close();
+            }
+            
+            refreshCustomerTable(); // Nạp lại bảng
+            
+            // Dọn dẹp form nhập liệu
+            txtCusPhone->clear(); txtCusName->clear(); txtCusPoints->clear();
+            txtCusPhone->setReadOnly(false);
+            txtCusPhone->setStyleSheet("");
+            
+            QMessageBox::information(this, "Thành công", "Đã tiễn khách hàng ra chuồng gà!");
+        }
+    });
+
+    // Tính năng Tìm kiếm
+    connect(searchCustomerInput, &QLineEdit::textChanged, this, [this](const QString &text) {
+        for (int i = 0; i < customerTable->rowCount(); ++i) {
+            bool match = customerTable->item(i, 0)->text().contains(text, Qt::CaseInsensitive) || 
+                         customerTable->item(i, 1)->text().contains(text, Qt::CaseInsensitive);
+            customerTable->setRowHidden(i, !match);
+        }
+    });
+
+    return page;
+}
+// 28/04
+
+// 28/04
+// --- HÀM NẠP DỮ LIỆU KHÁCH HÀNG LÊN BẢNG ---
+void MainWindow::refreshCustomerTable() {
+    if (!customerTable) return;
+    customerTable->setRowCount(0); // Xóa trắng bảng cũ
+
+    QFile file("datafiles/db_customers.txt");
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        int row = 0;
+        
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            QStringList parts = line.split("|");
+            
+            // File chuẩn phải có ít nhất 2 cột (SĐT và Điểm), nếu có 3 cột thì càng tốt (SĐT|Điểm|Tên)
+            if (parts.size() >= 2) {
+                QString phone = parts[0];
+                int points = parts[1].toInt();
+// Tự động phân loại Tên nếu khách chưa cập nhật tên thật
+                QString name;
+                if (parts.size() >= 3 && parts[2] != "Khách hàng VIP") {
+                    name = parts[2]; // Lấy tên thật trong file (nếu có)
+                } else {
+                    // Nếu chưa có tên thật: Dưới 3000 điểm là Khách Thường, từ 3000 là VIP
+                    if (points >= 3000) {
+                        name = "Khách hàng VIP (Kim Cương)";
+                    } else {
+                        name = "Khách hàng Thường";
+                    }
+                }
+                // Dùng class Customer để mượn hàm xếp hạng tự động
+                Customer tempCus(phone, points, name);
+
+                customerTable->insertRow(row);
+                customerTable->setItem(row, 0, new QTableWidgetItem(tempCus.getPhone()));
+                customerTable->setItem(row, 1, new QTableWidgetItem(tempCus.getName()));
+                customerTable->setItem(row, 2, new QTableWidgetItem(QString::number(tempCus.getPoints())));
+                
+                // Tô màu cho Hạng Thẻ nhìn cho "Đại gia"
+                QTableWidgetItem *rankItem = new QTableWidgetItem(tempCus.getRank());
+                rankItem->setFont(QFont("Arial", 10, QFont::Bold));
+                
+                if (tempCus.getRank() == "Kim Cương") rankItem->setForeground(QBrush(QColor("#9B59B6"))); // Tím
+                else if (tempCus.getRank() == "Vàng") rankItem->setForeground(QBrush(QColor("#FFC107"))); // Vàng
+                else if (tempCus.getRank() == "Bạc") rankItem->setForeground(QBrush(QColor("#17A2B8")));  // Xanh lam
+                else rankItem->setForeground(QBrush(QColor("#D35400"))); // Đồng
+
+                customerTable->setItem(row, 3, rankItem);
+                row++;
+            }
+        }
+        file.close();
     }
 }
 // 28/04
