@@ -1268,9 +1268,9 @@ QWidget* MainWindow::createSettingsPage() {
     groupStore->setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #CBD5E0; border-radius: 5px; margin-top: 15px; } QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; color: #2B6CB0; }");
     QFormLayout *storeLayout = new QFormLayout(groupStore);
     
-    QLineEdit *txtStoreName = new QLineEdit("Nhà Sách Phú Thành");
-    QLineEdit *txtAddress = new QLineEdit("Khu Công Nghệ Cao, TP.HCM");
-    QLineEdit *txtPhone = new QLineEdit("0379.701.715");
+    QLineEdit *txtStoreName = new QLineEdit("Nhà Sách Fetel Pro");
+    QLineEdit *txtAddress = new QLineEdit("227 đường Nguyễn Văn Cừ, Quận 5, TP.HCM");
+    QLineEdit *txtPhone = new QLineEdit("2370.141.922");
     QPushButton *btnSaveStore = new QPushButton("💾 Lưu thông tin");
     btnSaveStore->setStyleSheet("background-color: #3182CE; color: white; padding: 8px; border-radius: 5px; font-weight: bold;");
     
