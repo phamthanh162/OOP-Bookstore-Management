@@ -1,5 +1,0 @@
-C:/Users/Cheetos/Documents/GitHub/OOP-Bookstore-Management/build/CMakeFiles/OOP_Bookstore_Management.dir
-C:/Users/Cheetos/Documents/GitHub/OOP-Bookstore-Management/build/CMakeFiles/edit_cache.dir
-C:/Users/Cheetos/Documents/GitHub/OOP-Bookstore-Management/build/CMakeFiles/rebuild_cache.dir
-C:/Users/Cheetos/Documents/GitHub/OOP-Bookstore-Management/build/CMakeFiles/OOP_Bookstore_Management_autogen_timestamp_deps.dir
-C:/Users/Cheetos/Documents/GitHub/OOP-Bookstore-Management/build/CMakeFiles/OOP_Bookstore_Management_autogen.dir
