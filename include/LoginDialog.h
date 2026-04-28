@@ -11,15 +11,19 @@ public:
     explicit LoginDialog(QWidget *parent = nullptr);
     QString getRole() const { return userRole; } // <--- Thêm hàm này
 
+protected:
+    void changeEvent(QEvent *event) override;
+
 private:
     // Các biến giao diện
-    QLineEdit *txtUser;
-    QLineEdit *txtPass;
-    QPushButton *btnLogin;
+    QLineEdit *txtUser = nullptr;
+    QLineEdit *txtPass = nullptr;
+    QPushButton *btnLogin = nullptr;
 
     QString userRole; // <--- Thêm biến lưu Quyền (Role)
 
     // Các hàm xử lý
     void setupUI();
     void handleLogin();
+    void updateTheme();
 };
