@@ -1172,7 +1172,7 @@ QWidget* MainWindow::createSalesPage() {
         QMessageBox::information(this, "Thành công", "Đã cấp thẻ KIM CƯƠNG thành công!\nKiểm tra file: " + fileName);
     });
 
-    // SỰ KIỆN 6: SỬA SỐ LƯỢNG TRỰC TIẾP TRONG GIỎ HÀNG
+// SỰ KIỆN 6: SỬA SỐ LƯỢNG TRỰC TIẾP TRONG GIỎ HÀNG
     connect(cartTable, &QTableWidget::cellDoubleClicked, this, [this](int row, int column) {
         // Chỉ cho phép sửa khi click đúng vào CỘT SỐ LƯỢNG (Cột số 2)
         if (column != 2) return;
@@ -1186,30 +1186,36 @@ QWidget* MainWindow::createSalesPage() {
         if (!b) return;
         int maxQty = b->getQuantity();
 
-        // Bật bảng hỏi số lượng y như lúc Thêm vào giỏ
+        // Bật bảng hỏi số lượng
         bool ok;
+        // MẸO: Đổi giới hạn dưới (Min) từ 1 thành 0 ở đây
         int newQty = QInputDialog::getInt(this, "Sửa số lượng",
-                                          "Nhập số lượng mới cho:\n" + name,
-                                          currentQty, 1, maxQty, 1, &ok);
+                                          "Nhập số lượng mới cho:\n" + name + "\n(Nhập 0 để xóa khỏi giỏ hàng)",
+                                          currentQty, 0, maxQty, 1, &ok);
         
         // Nếu bấm Ok và số lượng có thay đổi
         if (ok && newQty != currentQty) {
-            // 1. Cập nhật con số mới lên giao diện
-            cartTable->item(row, 2)->setText(QString::number(newQty));
+            if (newQty == 0) {
+                // NẾU NHẬP BẰNG 0 -> XÓA LUÔN DÒNG NÀY KHỎI GIỎ HÀNG
+                cartTable->removeRow(row);
+            } else {
+                // NẾU NHẬP LỚN HƠN 0 -> CẬP NHẬT LẠI CON SỐ
+                cartTable->item(row, 2)->setText(QString::number(newQty));
 
-            // 2. Lấy đơn giá và Tính lại Thành tiền của dòng đó
-            QString priceStr = cartTable->item(row, 3)->text();
-            double price = priceStr.remove(" VNĐ").remove(".").toDouble();
-            
-            double itemTotal = price * newQty;
-            QString formattedItemTotal = QLocale(QLocale::English).toString(itemTotal, 'f', 0).replace(",", ".") + " VNĐ";
-            cartTable->item(row, 4)->setText(formattedItemTotal);
+                // Lấy đơn giá và Tính lại Thành tiền của dòng đó
+                QString priceStr = cartTable->item(row, 3)->text();
+                double price = priceStr.remove(" VNĐ").remove(".").toDouble();
+                
+                double itemTotal = price * newQty;
+                QString formattedItemTotal = QLocale(QLocale::English).toString(itemTotal, 'f', 0).replace(",", ".") + " VNĐ";
+                cartTable->item(row, 4)->setText(formattedItemTotal);
+            }
 
-            // 3. Tự động cộng lại cục Bill đỏ chót ở dưới cùng
+            // Tự động cộng lại cục Bill đỏ chót ở dưới cùng
             updateCartTotal();
         }
-    });
-
+    }); // hihi
+    
 // 28/04
     // --- LOGIC XỬ LÝ KHI BẤM NÚT ÁP DỤNG VOUCHER ---
     connect(btnApplyVoucher, &QPushButton::clicked, this, [this]() {
