@@ -1,0 +1,44 @@
+[
+{
+  "directory": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CHARTS_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/DOAN_OOP.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\DOAN_OOP.dir\\DOAN_OOP_autogen\\mocs_compilation.cpp.obj -c D:\\C++\\demo_OOP_ban_thu_nghiem_phat_trien\\build\\DOAN_OOP_autogen\\mocs_compilation.cpp",
+  "file": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/build/DOAN_OOP_autogen/mocs_compilation.cpp",
+  "output": "CMakeFiles/DOAN_OOP.dir/DOAN_OOP_autogen/mocs_compilation.cpp.obj"
+},
+{
+  "directory": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CHARTS_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/DOAN_OOP.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\DOAN_OOP.dir\\src\\main.cpp.obj -c D:\\C++\\demo_OOP_ban_thu_nghiem_phat_trien\\src\\main.cpp",
+  "file": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/src/main.cpp",
+  "output": "CMakeFiles/DOAN_OOP.dir/src/main.cpp.obj"
+},
+{
+  "directory": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CHARTS_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/DOAN_OOP.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\DOAN_OOP.dir\\src\\Book.cpp.obj -c D:\\C++\\demo_OOP_ban_thu_nghiem_phat_trien\\src\\Book.cpp",
+  "file": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/src/Book.cpp",
+  "output": "CMakeFiles/DOAN_OOP.dir/src/Book.cpp.obj"
+},
+{
+  "directory": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CHARTS_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/DOAN_OOP.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\DOAN_OOP.dir\\src\\InventoryManager.cpp.obj -c D:\\C++\\demo_OOP_ban_thu_nghiem_phat_trien\\src\\InventoryManager.cpp",
+  "file": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/src/InventoryManager.cpp",
+  "output": "CMakeFiles/DOAN_OOP.dir/src/InventoryManager.cpp.obj"
+},
+{
+  "directory": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CHARTS_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/DOAN_OOP.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\DOAN_OOP.dir\\src\\MainWindow.cpp.obj -c D:\\C++\\demo_OOP_ban_thu_nghiem_phat_trien\\src\\MainWindow.cpp",
+  "file": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/src/MainWindow.cpp",
+  "output": "CMakeFiles/DOAN_OOP.dir/src/MainWindow.cpp.obj"
+},
+{
+  "directory": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CHARTS_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/DOAN_OOP.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\DOAN_OOP.dir\\src\\LoginDialog.cpp.obj -c D:\\C++\\demo_OOP_ban_thu_nghiem_phat_trien\\src\\LoginDialog.cpp",
+  "file": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/src/LoginDialog.cpp",
+  "output": "CMakeFiles/DOAN_OOP.dir/src/LoginDialog.cpp.obj"
+},
+{
+  "directory": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CHARTS_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/DOAN_OOP.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\DOAN_OOP.dir\\src\\ReportManager.cpp.obj -c D:\\C++\\demo_OOP_ban_thu_nghiem_phat_trien\\src\\ReportManager.cpp",
+  "file": "D:/C++/demo_OOP_ban_thu_nghiem_phat_trien/src/ReportManager.cpp",
+  "output": "CMakeFiles/DOAN_OOP.dir/src/ReportManager.cpp.obj"
+}
+]
