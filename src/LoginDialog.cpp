@@ -23,8 +23,10 @@ void LoginDialog::setupUI() {
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->setSpacing(15);
 
-    QLabel *logo = new QLabel("🚀 HỆ THỐNG FETEL PRO");
+    // --- ĐÃ HÒA GIẢI XUNG ĐỘT (MERGED) ---
+    QLabel *logo = new QLabel("📚 ĐĂNG NHẬP FETEL PRO");
     logo->setStyleSheet("background-color: transparent; font-size: 20px; font-weight: bold; color: #0088CC;"); 
+    
     logo->setAlignment(Qt::AlignCenter);
 
     QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(this);

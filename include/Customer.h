@@ -1,3 +1,4 @@
+/*
 #pragma once
 #include <QString>
 
@@ -25,3 +26,33 @@ public:
     QString getRank() const { return rank; }
     int getPoints() const { return points; }
 };
+*/
+
+// 28/04  
+#pragma once
+#include <QString>
+
+class Customer {
+private:
+    QString phone;
+    QString name;
+    int points;
+
+public:
+    // Khởi tạo mặc định
+    Customer();
+    // Khởi tạo có tham số (Hỗ trợ code cũ chỉ truyền SĐT và Điểm)
+    Customer(QString phone, int points, QString name = "Khách hàng VIP");
+
+    // Getters
+    QString getPhone() const;
+    QString getName() const;
+    int getPoints() const;
+    QString getRank() const; // Tự động tính hạng dựa trên điểm
+
+    // Setters
+    void setPhone(QString phone);
+    void setName(QString name);
+    void setPoints(int points);
+};
+// 28/04

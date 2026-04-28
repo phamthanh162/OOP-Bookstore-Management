@@ -36,10 +36,10 @@ protected:
 
 private:
     // --- BIẾN CHO TRANG DASHBOARD & BÁO CÁO ---
-    QLabel *lblDashTotalBooks; // <--- THÊM DÒNG NÀY
-    QLabel *lblDashTotalValue; // <--- THÊM DÒNG NÀY
-    QLabel *lblDashTotalInvoices;  // <--- THÊM BIẾN NÀY (Tổng hóa đơn)
-    QLabel *lblDashTotalCustomers; // <--- THÊM BIẾN NÀY (Tổng khách hàng)
+    QLabel *lblDashTotalBooks; 
+    QLabel *lblDashTotalValue; 
+    QLabel *lblDashTotalInvoices;  // Tổng hóa đơn
+    QLabel *lblDashTotalCustomers; // Tổng khách hàng
 
     // THÊM 5 BIẾN NÀY ĐỂ ĐIỀU KHIỂN BIỂU ĐỒ VÀ BẢNG TOP 10:
     QChart *inventoryChart = nullptr;
@@ -55,23 +55,22 @@ private:
 
     QListWidget *sideMenu;        
     QStackedWidget *stackedPages; 
-    QString userRole; // <--- Thêm biến lưu Quyền (Role)
+    QString userRole; // Lưu Quyền (Role)
     QString currentUserRole;
 
     // --- BIẾN CHO TRANG QUẢN LÝ KHO ---
     InventoryManager manager; 
     QTableWidget *inventoryTable; 
     QLineEdit *idInput, *titleInput, *authorInput, *quantityInput, *priceInput;
-    QLineEdit *searchInventoryInput; // <--- THÊM DÒNG NÀY (Thanh tìm kiếm kho)
+    QLineEdit *searchInventoryInput; // Thanh tìm kiếm kho
 
     // --- BIẾN CHO TRANG DASHBOARD ---
     QLabel *lblTotalBooks;
     QLabel *lblTotalValue;
 
-    // Thêm 3 dòng này vào dưới lblTotalValue
     QLabel *lblTotalSold;
     QLabel *lblTotalRevenue;
-    QLabel *lblTotalCost;    // <--- THÊM BIẾN NÀY (Tiền vốn sách)
+    QLabel *lblTotalCost;    // Tiền vốn sách
     QLabel *lblTotalProfit;
 
     // --- BIẾN MỚI CHO TRANG BÁN HÀNG (POS) ---
@@ -79,13 +78,12 @@ private:
     QTableWidget *salesBookTable = nullptr; 
     QTableWidget *cartTable = nullptr;      
     QLabel *lblCartTotal = nullptr;   
-    QLineEdit *searchSalesInput;    // <--- THÊM DÒNG NÀY (Thanh tìm kiếm quầy bán)      
+    QLineEdit *searchSalesInput;    // Thanh tìm kiếm quầy bán      
 
     QLineEdit *txtVoucher;
     double voucherPercent = 0.0; // Lưu % giảm (VD: 0.15)
     double voucherFlat = 0.0;    // Lưu số tiền giảm thẳng (VD: 50000)
 
-    // THÊM 3 DÒNG NÀY VÀO:
     QLineEdit *txtCustomerPhone; 
     QLabel *lblCustomerInfo;
     double currentDiscount = 0.0; // Lưu % giảm giá (VD: 0.05 là 5%)
@@ -96,8 +94,7 @@ private:
     QWidget* createInventoryPage(); 
     QWidget* createSalesPage();     
     QWidget* createSettingsPage();  
-
-    QWidget* createReportPage();    // <--- THÊM DÒNG NÀY VÀO ĐÂY
+    QWidget* createReportPage();    
     
     void refreshInventoryTable();
     void updateDashboardStats();
@@ -108,11 +105,21 @@ private:
 
     // --- BIẾN CHO DASHBOARD ---
     QTableWidget *recentSalesTable = nullptr; 
-
-    QTableWidget *recentImportsTable = nullptr; // <--- THÊM BIẾN NÀY
+    QTableWidget *recentImportsTable = nullptr; 
 
     void loadSalesHistory(); // Hàm quét ổ cứng tìm hóa đơn
-    void loadImportHistory(); // <--- THÊM HÀM NÀY (Quét tìm phiếu nhập)
-    void updateTheme(); // Hàm do ta tự viết để tính toán lại toàn bộ màu sắc
-};
+    void loadImportHistory(); // Quét tìm phiếu nhập
 
+    // Hàm do ta tự viết để tính toán lại toàn bộ màu sắc (Từ nhánh LeNguyen)
+    void updateTheme(); 
+
+    // --- BIẾN CHO TRANG QUẢN LÝ KHÁCH HÀNG (Từ nhánh main) ---
+    QWidget* customerPage;
+    QTableWidget* customerTable;
+    QLineEdit* searchCustomerInput;
+    QLineEdit *txtCusPhone, *txtCusName, *txtCusPoints;
+    
+    // Khai báo hàm tạo trang
+    QWidget* createCustomerPage();
+    void refreshCustomerTable(); // Hàm nạp lại dữ liệu
+};
