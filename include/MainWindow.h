@@ -137,5 +137,19 @@ QTableWidget *recentImportsTable = nullptr; // <--- THÊM BIẾN NÀY
     void loadImportHistory(); // <--- THÊM HÀM NÀY (Quét tìm phiếu nhập)
 // mới thêm 28/04
 
+
+
+// 28/04
+// --- BIẾN CHO TRANG QUẢN LÝ KHÁCH HÀNG ---
+    QWidget* customerPage;
+    QTableWidget* customerTable;
+    QLineEdit* searchCustomerInput;
+    QLineEdit *txtCusPhone, *txtCusName, *txtCusPoints;
+    
+    // Khai báo hàm tạo trang
+    QWidget* createCustomerPage();
+    void refreshCustomerTable(); // Hàm nạp lại dữ liệu
+// 28/04
+
 };
 
