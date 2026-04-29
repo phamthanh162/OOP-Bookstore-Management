@@ -16,7 +16,7 @@ set(CMAKE_PREFIX_PATH "C:/msys64/ucrt64")
 set(Qt6_DIR "C:/msys64/ucrt64/lib/cmake/Qt6")
 
 # Tìm kiếm và nạp các module bắt buộc của Qt6 (Widgets cho giao diện, Charts cho biểu đồ)
-find_package(Qt6 REQUIRED COMPONENTS Widgets Charts)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Charts Sql)
 
 # Tự động quét toàn bộ file .cpp trong thư mục src
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp")
@@ -31,7 +31,7 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 
 # Liên kết file thực thi với các thư viện Qt6
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets Qt6::Charts)
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets Qt6::Charts Qt6::Sql)
 
 # Tự động đồng bộ thư mục dữ liệu sau mỗi lần biên dịch thành công (POST_BUILD)
 # Sao chép toàn bộ nội dung từ thư mục 'datafiles' gốc sang thư mục build

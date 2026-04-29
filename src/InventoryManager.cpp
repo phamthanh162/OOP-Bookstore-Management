@@ -1,79 +1,92 @@
 #include "InventoryManager.h"
-#include <QFile>
-#include <QTextStream>
-#include <QStringList>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDebug>
+#include <QMessageBox>
 
 InventoryManager::InventoryManager() {}
 
-void InventoryManager::addBook(const Book& newBook) {
-    // Tạm thời cứ thêm thẳng vào cuối danh sách
-    bookList.append(newBook);
+void InventoryManager::loadFromDatabase() {
+    bookList.clear(); // Xóa sạch cache cũ
+    QSqlQuery query("SELECT id, title, author, quantity, price FROM Books");
+    
+    while (query.next()) {
+        bookList.append(Book(
+            query.value(0).toString(),
+            query.value(1).toString(),
+            query.value(2).toString(),
+            query.value(3).toInt(),
+            query.value(4).toDouble()
+        ));
+    }
+}
+
+bool InventoryManager::addBook(const Book& newBook) {
+    // 🛡️ VÁ LỖ HỔNG CHÍ MẠNG: Kiểm tra trùng ID trước khi thêm
+    if (findBookById(newBook.getId()) != nullptr) {
+        return false; // Trả về false nếu ID đã tồn tại
+    }
+
+    QSqlQuery query;
+    query.prepare("INSERT INTO Books (id, title, author, quantity, price) VALUES (:id, :title, :author, :qty, :price)");
+    query.bindValue(":id", newBook.getId());
+    query.bindValue(":title", newBook.getTitle());
+    query.bindValue(":author", newBook.getAuthor());
+    query.bindValue(":qty", newBook.getQuantity());
+    query.bindValue(":price", newBook.getPrice());
+
+    if (query.exec()) {
+        bookList.append(newBook); // Cập nhật ngay vào cache để UI không bị lag
+        return true;
+    }
+    qDebug() << "Lỗi thêm sách DB:" << query.lastError().text();
+    return false;
+}
+
+bool InventoryManager::updateBook(const QString& id, const Book& newBook) {
+    QSqlQuery query;
+    query.prepare("UPDATE Books SET title=:title, author=:author, quantity=:qty, price=:price WHERE id=:id");
+    query.bindValue(":title", newBook.getTitle());
+    query.bindValue(":author", newBook.getAuthor());
+    query.bindValue(":qty", newBook.getQuantity());
+    query.bindValue(":price", newBook.getPrice());
+    query.bindValue(":id", id);
+
+    if (query.exec()) {
+        // Cập nhật lại cache
+        for (int i = 0; i < bookList.size(); ++i) {
+            if (bookList[i].getId() == id) {
+                bookList[i] = newBook;
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool InventoryManager::removeBook(const QString& id) {
-    for (int i = 0; i < bookList.size(); ++i) {
-        if (bookList[i].getId() == id) {
-            bookList.removeAt(i);
-            return true; // Xóa thành công
+    QSqlQuery query;
+    query.prepare("DELETE FROM Books WHERE id=:id");
+    query.bindValue(":id", id);
+
+    if (query.exec()) {
+        for (int i = 0; i < bookList.size(); ++i) {
+            if (bookList[i].getId() == id) {
+                bookList.removeAt(i);
+                return true;
+            }
         }
     }
-    return false; // Không tìm thấy sách để xóa
+    return false;
 }
 
 Book* InventoryManager::findBookById(const QString& id) {
     for (int i = 0; i < bookList.size(); ++i) {
-        if (bookList[i].getId() == id) {
-            return &bookList[i];
-        }
+        if (bookList[i].getId() == id) return &bookList[i];
     }
-    return nullptr; // Không tìm thấy
+    return nullptr;
 }
 
 QVector<Book> InventoryManager::getAllBooks() const {
     return bookList;
-}
-
-// --- GHI DỮ LIỆU RA FILE ---
-void InventoryManager::saveToFile(const QString& fileName) {
-    QFile file(fileName);
-    // Mở file ở chế độ Ghi đè (WriteOnly) và dạng Text
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream out(&file);
-        for (int i = 0; i < bookList.size(); ++i) {
-            // Lưu mỗi cuốn sách trên 1 dòng, cách nhau bởi dấu gạch đứng "|"
-            out << bookList[i].getId() << "|" 
-                << bookList[i].getTitle() << "|" 
-                << bookList[i].getAuthor() << "|" 
-                << bookList[i].getQuantity() << "|" 
-                << bookList[i].getPrice() << "\n";
-        }
-        file.close();
-    }
-}
-
-// --- ĐỌC DỮ LIỆU TỪ FILE ---
-void InventoryManager::loadFromFile(const QString& fileName) {
-    QFile file(fileName);
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        bookList.clear(); // Xóa sạch kho cũ trước khi nạp dữ liệu mới
-        QTextStream in(&file);
-        while (!in.atEnd()) {
-            QString line = in.readLine();
-            QStringList parts = line.split("|"); // Cắt dòng text ra thành các phần
-            if (parts.size() == 5) { // Phải đủ 5 thông tin mới nạp vào
-                bookList.append(Book(parts[0], parts[1], parts[2], parts[3].toInt(), parts[4].toDouble()));
-            }
-        }
-        file.close();
-    }
-}
-
-bool InventoryManager::updateBook(const QString& id, const Book& newBook) {
-    for (int i = 0; i < bookList.size(); ++i) {
-        if (bookList[i].getId() == id) {
-            bookList[i] = newBook; // Ghi đè dữ liệu mới
-            return true;
-        }
-    }
-    return false;
 }

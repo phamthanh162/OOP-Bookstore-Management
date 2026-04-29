@@ -34,6 +34,9 @@
 #include <QGuiApplication>
 #include <QEvent>
 #include <QPalette>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QToolTip>
 
 QLocale locale(QLocale::Vietnamese, QLocale::Vietnam);
 
@@ -68,7 +71,7 @@ MainWindow::MainWindow(QString role, QWidget *parent) : QWidget(parent), current
         setWindowTitle("FETEL - Hệ thống Quản trị (Quyền Admin)");
     }
 
-    manager.loadFromFile("datafiles/db_books.txt");
+    manager.loadFromDatabase();
     refreshInventoryTable(); 
 }
 
@@ -179,7 +182,7 @@ QWidget* MainWindow::createDashboardPage() {
     chartView->setRenderHint(QPainter::Antialiasing);
     chartView->setMinimumHeight(300);
     chartLayout->addWidget(chartView);
-    layout->addWidget(chartFrame, 1, 0, 1, 2);
+    layout->addWidget(chartFrame, 1, 0, 1, 3); // Ép Chart chiếm 3 cột
 
     QFrame *topBooksFrame = new QFrame();
     topBooksFrame->setObjectName("ContentCard");
@@ -198,7 +201,7 @@ QWidget* MainWindow::createDashboardPage() {
     tableTopBooks->setSelectionMode(QAbstractItemView::NoSelection); 
     topLayout->addWidget(tableTopBooks);
     
-    layout->addWidget(topBooksFrame, 1, 2, 1, 2);
+    layout->addWidget(topBooksFrame, 1, 3, 1, 1); // Top 10 lùi về góc, chiếm 1 cột
 
     recentImportsTable = new QTableWidget(0, 4); 
     recentImportsTable->setHorizontalHeaderLabels({"Mã Phiếu", "Nhà cung cấp", "Ngày nhập", "Tổng tiền"});
@@ -257,6 +260,8 @@ QWidget* MainWindow::createInventoryPage() {
     mainLayout->addWidget(searchInventoryInput);
 
     inventoryTable = new QTableWidget(0, 5);
+    inventoryTable->setFocusPolicy(Qt::NoFocus); // Diệt viền Focus
+    inventoryTable->verticalHeader()->setVisible(false); // Ẩn cột STT thừa
     inventoryTable->setSelectionBehavior(QAbstractItemView::SelectRows); 
     inventoryTable->setHorizontalHeaderLabels({"Mã sách", "Tên sách", "Tác giả", "Số lượng", "Giá bán"});
     inventoryTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -381,6 +386,10 @@ QWidget* MainWindow::createReportPage() {
     tableLowStock->setColumnWidth(2, 100);
     tableLowStock->setEditTriggers(QAbstractItemView::NoEditTriggers);
     
+    tableLowStock->setSelectionBehavior(QAbstractItemView::SelectRows); // Bấm vào là chọn cả hàng
+    tableLowStock->setFocusPolicy(Qt::NoFocus); // Xóa viền xanh bao ô
+    tableLowStock->verticalHeader()->setVisible(false); // Ẩn STT
+    
     leftCol->addWidget(subTitle);
     leftCol->addWidget(tableLowStock);
 
@@ -418,6 +427,7 @@ QWidget* MainWindow::createReportPage() {
 
 void MainWindow::refreshSalesBookTable() {
     salesBookTable->setRowCount(0);
+    salesBookTable->verticalHeader()->setVisible(false);
     QVector<Book> books = manager.getAllBooks();
     for (int i = 0; i < books.size(); ++i) {
         salesBookTable->insertRow(i);
@@ -480,6 +490,8 @@ QWidget* MainWindow::createSalesPage() {
     leftLayout->addWidget(searchSalesInput);
     
     salesBookTable = new QTableWidget(0, 4);
+    salesBookTable->setFocusPolicy(Qt::NoFocus);
+    salesBookTable->verticalHeader()->setVisible(false);
     salesBookTable->setHorizontalHeaderLabels({"Mã", "Tên sách", "Tồn kho", "Giá bán"});
     salesBookTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     salesBookTable->setEditTriggers(QAbstractItemView::NoEditTriggers); 
@@ -496,6 +508,8 @@ QWidget* MainWindow::createSalesPage() {
     rightLayout->addWidget(lblRightTitle);
     
     cartTable = new QTableWidget(0, 5);
+    cartTable->setFocusPolicy(Qt::NoFocus);
+    cartTable->verticalHeader()->setVisible(false);
     cartTable->setHorizontalHeaderLabels({"Mã", "Tên", "SL", "Đơn giá", "Thành tiền"});
     cartTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     cartTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -505,7 +519,7 @@ QWidget* MainWindow::createSalesPage() {
     rightLayout->addWidget(cartTable);
 
     QGroupBox *groupVIP = new QGroupBox("👑 Khách hàng thân thiết");
-    groupVIP->setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #EAEAEA; border-radius: 8px; margin-top: 10px; padding-top: 15px; } QGroupBox::title { color: #C92127; subcontrol-origin: margin; left: 10px; padding: 0 5px; }");
+    groupVIP->setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #EAEAEA; border-radius: 8px; margin-top: 10px; padding-top: 15px; } QGroupBox::title { color: #DC3545; subcontrol-origin: margin; left: 10px; padding: 0 5px; }");
     QVBoxLayout *vipLayout = new QVBoxLayout(groupVIP);
     
     QHBoxLayout *phoneLayout = new QHBoxLayout();
@@ -1119,8 +1133,6 @@ void MainWindow::refreshInventoryTable() {
     if (tableLowStock != nullptr) {
         refreshReportData();
     }
-
-    manager.saveToFile("datafiles/db_books.txt");
 }
 
 void MainWindow::updateDashboardStats() {
@@ -1169,17 +1181,33 @@ void MainWindow::updateDashboardStats() {
     inventoryAxisX->clear();           
 
     QBarSeries *newSeries = new QBarSeries();
+
     QBarSet *set = new QBarSet("Tồn kho");
-    set->setColor(QColor("#3182CE")); 
+    
+    QLinearGradient gradient(0, 0, 0, 400);
+    gradient.setColorAt(0.0, QColor("#00C6FF")); 
+    gradient.setColorAt(1.0, QColor("#0072FF")); 
+    set->setBrush(gradient); 
+    
+    // Đặt màu và font chữ cho nhãn (2 hàm này thì QBarSet có hỗ trợ)
+    set->setLabelColor(QColor("#FFD700")); 
+    set->setLabelFont(QFont("Arial", 11, QFont::Bold));
     
     QStringList categories;
     int maxQty = 10;
     int count = 0;
     
     for (const auto& b : books) {
-        if (count >= 10) break; 
+        if (count >= 10) break;
         *set << b.getQuantity();
-        categories << b.getTitle().left(12) + "..."; 
+        
+        // Cho phép dài 20 ký tự
+        QString title = b.getTitle();
+        if (title.length() > 20) {
+            title = title.left(17) + "..."; 
+        }
+        categories << title; 
+        
         if (b.getQuantity() > maxQty) maxQty = b.getQuantity();
         count++;
     }
@@ -1190,8 +1218,39 @@ void MainWindow::updateDashboardStats() {
     inventoryAxisX->append(categories);
     inventoryAxisY->setRange(0, maxQty + (maxQty * 0.2));
     
+    // BƯỚC 1: Bắt buộc phải Attach trục vào trước
     newSeries->attachAxis(inventoryAxisX);
     newSeries->attachAxis(inventoryAxisY);
+
+    // BƯỚC 2: Ép font nhỏ lại và xoay (-45) ở ngay đây thì nó mới chịu tác dụng!
+    QFont axisFont = inventoryAxisX->labelsFont();
+    axisFont.setPointSize(8); 
+    inventoryAxisX->setLabelsFont(axisFont);
+    inventoryAxisX->setLabelsAngle(-45); 
+
+    // BƯỚC 3: Dập lề dưới 100px để chứa chữ nghiêng
+    inventoryChart->setMargins(QMargins(0, 10, 0, 100)); 
+    inventoryChart->layout()->setContentsMargins(0, 0, 0, 0);
+
+    // --- HOVER TOOLTIP ---
+    connect(newSeries, &QBarSeries::hovered, this, [categories](bool status, int index, QBarSet *barset) {
+        if (status) {
+            // Khi chuột trỏ vào cột -> Hiện Popup Tooltip mượt mà
+            QString tooltipText = QString("<b style='color:#0088CC;'>%1</b><br/>Tồn kho: <b>%2</b> cuốn")
+                                  .arg(categories.at(index))
+                                  .arg(barset->at(index));
+            QToolTip::showText(QCursor::pos(), tooltipText);
+        } else {
+            QToolTip::hideText(); // Ẩn khi đưa chuột ra ngoài
+        }
+    });
+
+    newSeries->attachAxis(inventoryAxisX);
+    newSeries->attachAxis(inventoryAxisY);
+
+    // --- FIX LỖI ÉP DẸT (XÓA MARGIN THỪA CỦA CHART) ---
+    inventoryChart->setMargins(QMargins(0, 10, 0, 0));
+    inventoryChart->layout()->setContentsMargins(0, 0, 0, 0);
 
     QMap<QString, int> bookSales;
     for (const QFileInfo &fileInfo : files) {
@@ -1452,14 +1511,23 @@ void MainWindow::updateTheme() {
 
     bool isDark = QGuiApplication::palette().color(QPalette::Window).lightness() < 128;
 
+    // --- CẬP NHẬT GIAO DIỆN BIỂU ĐỒ ---
     if (inventoryChart) {
         inventoryChart->setTheme(isDark ? QChart::ChartThemeDark : QChart::ChartThemeLight);
         inventoryChart->setBackgroundVisible(false); 
+        
+        // Tắt lưới nền cho trục X và Y để biểu đồ nhìn thanh thoát như Web
+        if (!inventoryChart->axes(Qt::Horizontal).isEmpty())
+            inventoryChart->axes(Qt::Horizontal).first()->setGridLineVisible(false);
+        if (!inventoryChart->axes(Qt::Vertical).isEmpty())
+            inventoryChart->axes(Qt::Vertical).first()->setGridLineVisible(false);
     }
 
+    // --- CẬP NHẬT MÀU SẮC CHUNG ---
     QString textColor = isDark ? "#C9D1D9" : "#2D3748"; 
     QString cardBg = isDark ? "rgba(22, 27, 34, 0.6)" : "rgba(255, 255, 255, 0.6)"; 
 
+    // --- BỘ CSS HOÀN CHỈNH CHO TOÀN APP ---
     QString qss = QString(R"(
         /* Menu Bên Trái */
         QListWidget {
@@ -1480,20 +1548,45 @@ void MainWindow::updateTheme() {
             border-radius: 10px; border: 1px solid #0088CC;
         }
 
-        /* THUỐC TRỊ BỆNH CHO BẢNG */
-        QTableWidget {
+        /* THUỐC TRỊ BỆNH CHO BẢNG - DIỆT TẬN GỐC VẠCH FUSION */
+        QTableView {
             background-color: transparent;
             color: %1;
             alternate-background-color: rgba(0, 136, 204, 0.05); 
             border: none;
+            gridline-color: rgba(0, 136, 204, 0.2); 
+            outline: none;
+            /* TUYỆT ĐỐI KHÔNG xài selection-background-color ở đây nữa */
         }
+        
+        QTableView::item {
+            border: none; 
+            padding: 5px;
+        }
+
+        /* CHÌA KHÓA: Ép Qt tự tô màu nền bằng Item, bypass cái vạch của Windows */
+        QTableView::item:selected {
+            background-color: rgba(0, 136, 204, 0.4); 
+            color: #FFFFFF;
+            border: none;
+        }
+
         QHeaderView::section {
             background-color: rgba(0, 136, 204, 0.1);
             color: #0088CC; font-weight: bold;
             border: none; border-bottom: 2px solid #0088CC;
             padding: 5px;
         }
+        
+        QHeaderView::section:vertical {
+            border-bottom: none;
+            border-right: 2px solid #0088CC;
+            background-color: transparent;
+        }
+
         QLabel { color: %1; }
+
+        /* Nút Đăng Xuất Dưới Đáy */
         QPushButton#BtnLogout {
             background-color: transparent;
             text-align: left;
@@ -1501,12 +1594,12 @@ void MainWindow::updateTheme() {
             font-size: 15px;
             font-weight: bold;
             border: none;
-            border-top: 1px solid rgba(0, 136, 204, 0.3); 
+            border-top: 1px solid rgba(0, 136, 204, 0.3);
             border-right: 1px solid #0088CC;
             color: %1;
         }
         QPushButton#BtnLogout:hover {
-            background-color: rgba(220, 53, 69, 0.1); 
+            background-color: rgba(220, 53, 69, 0.1);
             color: #DC3545; 
             border-left: 5px solid #DC3545;
         }
@@ -1514,7 +1607,12 @@ void MainWindow::updateTheme() {
 
     this->setStyleSheet(qss);
 
-    isUpdating = false; 
+    isUpdating = false;
+
+    QList<QTableWidget*> allTables = this->findChildren<QTableWidget*>();
+    for (QTableWidget* table : allTables) {
+        table->setFocusPolicy(Qt::NoFocus);
+    }
 }
 
 QWidget* MainWindow::createCustomerPage() {
@@ -1558,6 +1656,8 @@ QWidget* MainWindow::createCustomerPage() {
     mainLayout->addWidget(searchCustomerInput);
 
     customerTable = new QTableWidget(0, 4);
+    customerTable->setFocusPolicy(Qt::NoFocus);
+    customerTable->verticalHeader()->setVisible(false);
     customerTable->setHorizontalHeaderLabels({"Số Điện Thoại", "Tên Khách Hàng", "Điểm", "Hạng Thẻ"});
     customerTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     customerTable->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -1590,73 +1690,47 @@ QWidget* MainWindow::createCustomerPage() {
         if(points.isEmpty()) points = "0"; 
 
         if (name.isEmpty()) {
-            if (points.toInt() >= 3000) {
-                name = "Khách hàng VIP (Kim Cương)";
-            } else {
-                name = "Khách hàng Thường";
-            }
+            name = (points.toInt() >= 3000) ? "Khách hàng VIP (Kim Cương)" : "Khách hàng Thường";
         }
 
-        QList<QString> lines;
-        QFile file("datafiles/db_customers.txt"); 
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QTextStream in(&file);
-            while(!in.atEnd()) {
-                QString line = in.readLine();
-                if(!line.startsWith(phone + "|")) { lines.append(line); } 
-            }
-            file.close();
-        }
+        // Lệnh INSERT OR REPLACE: Nếu SĐT chưa có thì thêm mới, có rồi thì cập nhật (Update)!
+        QSqlQuery query;
+        query.prepare("INSERT OR REPLACE INTO Customers (phone, name, points) VALUES (:phone, :name, :points)");
+        query.bindValue(":phone", phone);
+        query.bindValue(":name", name);
+        query.bindValue(":points", points.toInt());
         
-        lines.append(phone + "|" + points + "|" + name); 
-        
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&file);
-            for(const QString& l : lines) out << l << "\n";
-            file.close();
+        if (query.exec()) {
+            refreshCustomerTable();
+            QMessageBox::information(this, "Xong", "Đã lưu thông tin khách hàng!");
+        } else {
+            QMessageBox::warning(this, "Lỗi Database", "Không thể lưu khách hàng!");
         }
-        refreshCustomerTable();
-        QMessageBox::information(this, "Xong", "Đã lưu thông tin khách hàng!");
     });
 
     connect(btnDeleteCus, &QPushButton::clicked, this, [this]() {
         int row = customerTable->currentRow();
         if (row < 0) {
-            QMessageBox::warning(this, "Lỗi", "Vui lòng chọn 1 khách hàng trên bảng để xóa!");
-            return;
+            QMessageBox::warning(this, "Lỗi", "Vui lòng chọn 1 khách hàng trên bảng để xóa!"); return;
         }
         
         QString phoneToDelete = customerTable->item(row, 0)->text();
-        
         QMessageBox::StandardButton reply = QMessageBox::question(this, "Xác nhận", 
             "Bạn có chắc chắn muốn xóa khách hàng " + phoneToDelete + " không?", 
             QMessageBox::Yes | QMessageBox::No);
             
         if (reply == QMessageBox::Yes) {
-            QList<QString> lines;
-            QFile file("datafiles/db_customers.txt");
-            if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                QTextStream in(&file);
-                while(!in.atEnd()) {
-                    QString line = in.readLine();
-                    if(!line.startsWith(phoneToDelete + "|")) { lines.append(line); }
-                }
-                file.close();
+            QSqlQuery query;
+            query.prepare("DELETE FROM Customers WHERE phone = :phone");
+            query.bindValue(":phone", phoneToDelete);
+            
+            if(query.exec()) {
+                refreshCustomerTable();
+                txtCusPhone->clear(); txtCusName->clear(); txtCusPoints->clear();
+                txtCusPhone->setReadOnly(false);
+                txtCusPhone->setStyleSheet("");
+                QMessageBox::information(this, "Thành công", "Đã tiễn khách hàng ra chuồng gà!");
             }
-            
-            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                QTextStream out(&file);
-                for(const QString& l : lines) out << l << "\n";
-                file.close();
-            }
-            
-            refreshCustomerTable(); 
-            
-            txtCusPhone->clear(); txtCusName->clear(); txtCusPoints->clear();
-            txtCusPhone->setReadOnly(false);
-            txtCusPhone->setStyleSheet("");
-            
-            QMessageBox::information(this, "Thành công", "Đã tiễn khách hàng ra chuồng gà!");
         }
     });
 
@@ -1675,49 +1749,29 @@ void MainWindow::refreshCustomerTable() {
     if (!customerTable) return;
     customerTable->setRowCount(0); 
 
-    QFile file("datafiles/db_customers.txt");
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QTextStream in(&file);
-        int row = 0;
+    QSqlQuery query("SELECT phone, points, name FROM Customers");
+    int row = 0;
+    while (query.next()) {
+        QString phone = query.value(0).toString();
+        int points = query.value(1).toInt();
+        QString name = query.value(2).toString();
         
-        while (!in.atEnd()) {
-            QString line = in.readLine();
-            QStringList parts = line.split("|");
-            
-            if (parts.size() >= 2) {
-                QString phone = parts[0];
-                int points = parts[1].toInt();
-                
-                QString name;
-                if (parts.size() >= 3 && !parts[2].trimmed().isEmpty() && parts[2] != "Khách hàng VIP") {
-                    name = parts[2]; 
-                } else {
-                    if (points >= 3000) {
-                        name = "Khách hàng VIP (Kim Cương)";
-                    } else {
-                        name = "Khách hàng Thường";
-                    }
-                }
-                
-                Customer tempCus(phone, points, name);
+        Customer tempCus(phone, points, name); // Kế thừa logic tính Rank
+        
+        customerTable->insertRow(row);
+        customerTable->setItem(row, 0, new QTableWidgetItem(tempCus.getPhone()));
+        customerTable->setItem(row, 1, new QTableWidgetItem(tempCus.getName()));
+        customerTable->setItem(row, 2, new QTableWidgetItem(QString::number(tempCus.getPoints())));
+        
+        QTableWidgetItem *rankItem = new QTableWidgetItem(tempCus.getRank());
+        rankItem->setFont(QFont("Arial", 10, QFont::Bold));
+        
+        if (tempCus.getRank() == "Kim Cương") rankItem->setForeground(QBrush(QColor("#9B59B6"))); 
+        else if (tempCus.getRank() == "Vàng") rankItem->setForeground(QBrush(QColor("#FFC107")));
+        else if (tempCus.getRank() == "Bạc") rankItem->setForeground(QBrush(QColor("#17A2B8")));  
+        else rankItem->setForeground(QBrush(QColor("#D35400"))); 
 
-                customerTable->insertRow(row);
-                customerTable->setItem(row, 0, new QTableWidgetItem(tempCus.getPhone()));
-                customerTable->setItem(row, 1, new QTableWidgetItem(tempCus.getName()));
-                customerTable->setItem(row, 2, new QTableWidgetItem(QString::number(tempCus.getPoints())));
-                
-                QTableWidgetItem *rankItem = new QTableWidgetItem(tempCus.getRank());
-                rankItem->setFont(QFont("Arial", 10, QFont::Bold));
-                
-                if (tempCus.getRank() == "Kim Cương") rankItem->setForeground(QBrush(QColor("#9B59B6"))); 
-                else if (tempCus.getRank() == "Vàng") rankItem->setForeground(QBrush(QColor("#FFC107"))); 
-                else if (tempCus.getRank() == "Bạc") rankItem->setForeground(QBrush(QColor("#17A2B8")));  
-                else rankItem->setForeground(QBrush(QColor("#D35400"))); 
-
-                customerTable->setItem(row, 3, rankItem);
-                row++;
-            }
-        }
-        file.close();
+        customerTable->setItem(row, 3, rankItem);
+        row++;
     }
 }
