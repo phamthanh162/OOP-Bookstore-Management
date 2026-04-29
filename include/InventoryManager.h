@@ -4,20 +4,18 @@
 
 class InventoryManager {
 private:
-    QVector<Book> bookList; // Danh sách sách trong kho
+    QVector<Book> bookList; // Vẫn giữ làm Cache bộ nhớ tạm để UI chạy nhanh
 
 public:
     InventoryManager();
 
-    // Các hàm nghiệp vụ cốt lõi
-    void addBook(const Book& newBook);
+    bool addBook(const Book& newBook); // Đổi thành bool để bắt lỗi trùng ID
     bool removeBook(const QString& id);
     bool updateBook(const QString& id, const Book& newBook);
-    Book* findBookById(const QString& id); // Trả về con trỏ để dễ kiểm tra Null
+    Book* findBookById(const QString& id);
     
-    // Lấy toàn bộ danh sách để in ra bảng giao diện
     QVector<Book> getAllBooks() const;
 
-    void saveToFile(const QString& fileName);
-    void loadFromFile(const QString& fileName);
+    // KHAI TỬ saveToFile và loadFromFile, thay bằng:
+    void loadFromDatabase(); 
 };
