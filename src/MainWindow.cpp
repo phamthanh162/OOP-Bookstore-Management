@@ -1,4 +1,4 @@
-#include "MainWindow.h"
+#include "MainWindow.h" // hihi
 #include "Customer.h"
 
 #include <QHBoxLayout>
@@ -696,47 +696,48 @@ QWidget* MainWindow::createSalesPage() {
             billFile.close();
         }
 
-        QString customerPhone = txtCustomerPhone->text();
+QString customerPhone = txtCustomerPhone->text();
         if (!customerPhone.isEmpty()) {
-            QList<QString> lines;
-            int oldPoints = 0;
-            QString oldName = "";
-
-            QFile readFile("datafiles/db_customers.txt");
-            if (readFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                QTextStream in(&readFile);
-                while (!in.atEnd()) {
-                    QString line = in.readLine();
-                    QStringList parts = line.split("|");
-                    if (parts.size() >= 2) {
-                        if (parts[0] == customerPhone) {
-                            oldPoints = parts[1].toInt(); 
-                            if (parts.size() >= 3) oldName = parts[2];
-                        } else {
-                            lines.append(line); 
-                        }
-                    }
-                }
-                readFile.close();
-            }
-
             int earnedPoints = finalTotalToPrint / 10000;
             if (earnedPoints == 0 && finalTotalToPrint > 0) earnedPoints = 1; 
-            
-            int newTotalPoints = oldPoints + earnedPoints; 
 
-            QFile writeFile("datafiles/db_customers.txt");
-            if (writeFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                QTextStream out(&writeFile);
-                for (const QString& l : lines) {
-                    out << l << "\n";
-                }
-                out << customerPhone << "|" << newTotalPoints; 
-                if (!oldName.isEmpty()) out << "|" << oldName;
-                out << "\n";
-                writeFile.close();
+            int oldPoints = 0;
+            QString oldName = "";
+            bool isNewCustomer = true; // Cờ đánh dấu để phân biệt lần đầu mua
+
+            // 1. Kiểm tra xem khách đã có trong Database chưa
+            QSqlQuery checkQuery;
+            checkQuery.prepare("SELECT points, name FROM Customers WHERE phone = :phone");
+            checkQuery.bindValue(":phone", customerPhone);
+            if (checkQuery.exec() && checkQuery.next()) {
+                oldPoints = checkQuery.value(0).toInt();
+                oldName = checkQuery.value(1).toString();
+                isNewCustomer = false; // Đã tìm thấy -> Không phải khách mới
             }
 
+            int newTotalPoints = oldPoints + earnedPoints; 
+
+            // 2. LOGIC ĐỊNH DANH CHUẨN:
+            if (isNewCustomer) {
+                oldName = "Khách hàng Mới"; // Lần đầu mua hàng
+            } else {
+                // Từ lần 2 trở đi: Xét hạng Đồng, Bạc, Vàng (< 3000) vs Kim Cương (>= 3000)
+                if (newTotalPoints >= 3000) {
+                    oldName = "Khách hàng VIP";
+                } else {
+                    oldName = "Khách hàng thường";
+                }
+            }
+
+            // 3. Lưu đè dữ liệu mới vào SQLite
+            QSqlQuery updateQuery;
+            updateQuery.prepare("INSERT OR REPLACE INTO Customers (phone, name, points) VALUES (:phone, :name, :points)");
+            updateQuery.bindValue(":phone", customerPhone);
+            updateQuery.bindValue(":name", oldName);
+            updateQuery.bindValue(":points", newTotalPoints);
+            updateQuery.exec();
+
+            // 4. Logic lên hạng thẻ Kim Cương (GIỮ NGUYÊN ĐOẠN CODE VẼ QPixmap Ở ĐÂY)
             if (oldPoints < 3000 && newTotalPoints >= 3000) {
                 QPixmap card(600, 350);
                 card.fill(Qt::white); 
@@ -793,6 +794,8 @@ QWidget* MainWindow::createSalesPage() {
 
     });
 
+/*
+// bị bỏ 30/04
     connect(btnCheckVIP, &QPushButton::clicked, this, [this]() {
         QString phone = txtCustomerPhone->text();
         if (phone.isEmpty()) {
@@ -854,7 +857,67 @@ QWidget* MainWindow::createSalesPage() {
         
         updateCartTotal(); 
     });
-    
+// bị bỏ 30/04
+*/ 
+
+// 30/04
+    connect(btnCheckVIP, &QPushButton::clicked, this, [this]() {
+        QString phone = txtCustomerPhone->text();
+        if (phone.isEmpty()) {
+            QMessageBox::warning(this, "Trống", "Vui lòng nhập số điện thoại!");
+            return;
+        }
+
+        bool found = false;
+        int currentPoints = 0;
+        QString customerName = "Khách hàng";
+
+        // ĐỌC TỪ DATABASE SQLITE THAY VÌ FILE TXT CŨ
+        QSqlQuery query;
+        query.prepare("SELECT points, name FROM Customers WHERE phone = :phone");
+        query.bindValue(":phone", phone);
+        if (query.exec() && query.next()) {
+            currentPoints = query.value(0).toInt();
+            customerName = query.value(1).toString();
+            found = true;
+        }
+
+        if (found) {
+            Customer c(phone, currentPoints, customerName);
+            QString rankInfo = QString("⭐ Khách hàng: %1 - Điểm: %2\n").arg(c.getRank()).arg(c.getPoints());
+            
+            if (c.getRank() == "Kim Cương") {
+                rankInfo += "💎 Áp dụng mức chiết khấu Kim Cương 10%!";
+                lblCustomerInfo->setStyleSheet("color: #9B59B6; font-weight: bold; font-size: 14px;"); 
+                currentDiscount = 0.10;
+            } 
+            else if (c.getRank() == "Vàng") {
+                rankInfo += "🎉 Áp dụng mức chiết khấu Vàng 7%!";
+                lblCustomerInfo->setStyleSheet("color: #FFC107; font-weight: bold; font-size: 14px;"); 
+                currentDiscount = 0.07;
+            } 
+            else if (c.getRank() == "Bạc") {
+                rankInfo += "🎉 Áp dụng mức chiết khấu Bạc 5%!";
+                lblCustomerInfo->setStyleSheet("color: #17A2B8; font-weight: bold; font-size: 14px;"); 
+                currentDiscount = 0.05;
+            } 
+            else { 
+                rankInfo += "🎉 Áp dụng mức chiết khấu Đồng 3%!";
+                lblCustomerInfo->setStyleSheet("color: #D35400; font-weight: bold; font-size: 14px;"); 
+                currentDiscount = 0.03;
+            }
+            lblCustomerInfo->setText(rankInfo);
+
+        } else {
+            lblCustomerInfo->setText("Khách hàng mới (Sẽ tự động tạo thẻ sau khi thanh toán)");
+            lblCustomerInfo->setStyleSheet("color: #007BFF; font-weight: bold; font-size: 13px;");
+            currentDiscount = 0.0;
+        }
+        updateCartTotal(); 
+    });
+// 30/04
+ 
+
     connect(btnIssueCard, &QPushButton::clicked, this, [this]() {
         QString phone = txtCustomerPhone->text();
         if (phone.isEmpty()) {
@@ -862,12 +925,22 @@ QWidget* MainWindow::createSalesPage() {
             return;
         }
 
-        QFile file("datafiles/db_customers.txt");
-        if (file.open(QIODevice::Append | QIODevice::Text)) {
-            QTextStream out(&file);
-            out << phone << "|3000\n"; 
-            file.close();
+    // 30/04
+        // BƠM KHÁCH HÀNG THẲNG VÀO DATABASE
+        QSqlQuery query;
+        query.prepare("INSERT OR REPLACE INTO Customers (phone, name, points) VALUES (:phone, 'Khách VIP', 3000)");
+        query.bindValue(":phone", phone);
+        if(query.exec()) {
+             refreshCustomerTable(); // Cập nhật lại ngay trên bảng
         }
+    // 30/04
+        // --- BẠN GIỮ NGUYÊN ĐOẠN CODE VẼ THẺ QPixmap TỪ ĐÂY TRỞ XUỐNG NHÉ ---
+        // QFile file("datafiles/db_customers.txt");
+        // if (file.open(QIODevice::Append | QIODevice::Text)) {
+        //     QTextStream out(&file);
+        //     out << phone << "|3000\n";
+        //     file.close();
+        
 
         QPixmap card(600, 350);
         card.fill(QColor("#1A1A1A")); 
@@ -936,7 +1009,8 @@ QWidget* MainWindow::createSalesPage() {
             updateCartTotal();
         }
     }); 
-    
+
+/* bị xóa 30/04
     connect(btnApplyVoucher, &QPushButton::clicked, this, [this]() {
         QString code = txtVoucher->text().trimmed();
 
@@ -970,6 +1044,79 @@ QWidget* MainWindow::createSalesPage() {
         }
         updateCartTotal(); 
     });
+// bị xóa 30/04
+*/
+
+// 30/04 
+    connect(btnApplyVoucher, &QPushButton::clicked, this, [this]() {
+        QString code = txtVoucher->text().trimmed();
+
+        if(code.isEmpty()) {
+            voucherPercent = 0.0;
+            voucherFlat = 0.0;
+            updateCartTotal(); 
+            return; 
+        }
+
+        QFile file("datafiles/db_vouchers.txt"); 
+        bool found = false;
+        bool isExpired = false;
+        bool isNotStarted = false; // Bổ sung biến kiểm tra "Chưa đến hạn"
+
+        if(file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream in(&file);
+            while(!in.atEnd()) {
+                QStringList parts = in.readLine().split("|");
+                
+                // Cấu trúc mới: Mã | Giá trị | Ngày bắt đầu | Ngày kết thúc
+                if(parts.size() >= 2 && parts[0] == code) {
+                    found = true;
+                    
+                    // Kiểm tra khoảng thời gian (Cột 2 là Bắt đầu, Cột 3 là Kết thúc)
+                    if (parts.size() >= 4) {
+                        QDate startDate = QDate::fromString(parts[2].trimmed(), "dd/MM/yyyy");
+                        QDate endDate = QDate::fromString(parts[3].trimmed(), "dd/MM/yyyy");
+                        QDate today = QDate::currentDate();
+
+                        // 1. Kiểm tra xem đã đến ngày Sale chưa
+                        if (startDate.isValid() && today < startDate) {
+                            isNotStarted = true;
+                            break; 
+                        }
+                        
+                        // 2. Kiểm tra xem có bị quá hạn Sale không
+                        if (endDate.isValid() && today > endDate) {
+                            isExpired = true;
+                            break; 
+                        }
+                    }
+
+                    // Nếu lọt qua được các cửa ải trên -> Hợp lệ -> Tính tiền!
+                    double val = parts[1].toDouble();
+                    if(val < 1.0) { voucherPercent = val; voucherFlat = 0.0; } 
+                    else { voucherFlat = val; voucherPercent = 0.0; }           
+                    QMessageBox::information(this, "Thành công", "Áp dụng Voucher thành công!");
+                    break;
+                }
+            }
+            file.close();
+        }
+        
+        // --- XUẤT THÔNG BÁO LỖI PHÂN LOẠI RÕ RÀNG ---
+        if(!found) {
+            QMessageBox::warning(this, "Lỗi", "Mã giảm giá không tồn tại!");
+            voucherPercent = 0.0; voucherFlat = 0.0;
+        } else if (isNotStarted) {
+            QMessageBox::warning(this, "Chưa mở thưởng", "Chiến dịch Sale này chưa bắt đầu. Vui lòng quay lại sau!");
+            voucherPercent = 0.0; voucherFlat = 0.0;
+        } else if (isExpired) {
+            QMessageBox::warning(this, "Rất tiếc", "Mã giảm giá này đã hết thời gian sử dụng!");
+            voucherPercent = 0.0; voucherFlat = 0.0;
+        }
+        
+        updateCartTotal(); 
+    });
+// 30/04
 
     connect(searchSalesInput, &QLineEdit::textChanged, this, [this](const QString &text) {
         for (int i = 0; i < salesBookTable->rowCount(); ++i) {
@@ -1068,6 +1215,9 @@ QWidget* MainWindow::createSettingsPage() {
     addStaffToTable("NV01", "Phạm Phú Thành", "Quản trị viên (Admin)");
     addStaffToTable("NV03", "Trần Thị Thu Ngân", "Nhân viên Bán hàng");
 
+    addStaffToTable("NV02", "Lê Nguyễn", "Quản lý");
+    addStaffToTable("NV04", "Huỳnh Đức Trọng", "Thủ kho");
+    
     connect(btnSaveStore, &QPushButton::clicked, this, [this]() {
         QMessageBox::information(this, "Thành công", "Đã cập nhật thông tin cửa hàng!");
     });
@@ -1689,11 +1839,16 @@ QWidget* MainWindow::createCustomerPage() {
         if(phone.isEmpty()) { QMessageBox::warning(this, "Lỗi", "Vui lòng nhập SĐT!"); return; }
         if(points.isEmpty()) points = "0"; 
 
-        if (name.isEmpty()) {
-            name = (points.toInt() >= 3000) ? "Khách hàng VIP (Kim Cương)" : "Khách hàng Thường";
+        // TỰ ĐỘNG GÁN TÊN CHUẨN NẾU Ô TÊN BỊ BỎ TRỐNG HOẶC LÀ TÊN HỆ THỐNG GÁN
+        if (name.isEmpty() || name.contains("Khách hàng Mới") || name.contains("Khách hàng thường") || name.contains("Khách hàng VIP")) {
+            if (points.toInt() >= 3000) {
+                name = "Khách hàng VIP";
+            } else {
+                name = "Khách hàng thường";
+            }
         }
 
-        // Lệnh INSERT OR REPLACE: Nếu SĐT chưa có thì thêm mới, có rồi thì cập nhật (Update)!
+        // Lệnh cập nhật chuẩn
         QSqlQuery query;
         query.prepare("INSERT OR REPLACE INTO Customers (phone, name, points) VALUES (:phone, :name, :points)");
         query.bindValue(":phone", phone);
@@ -1703,6 +1858,7 @@ QWidget* MainWindow::createCustomerPage() {
         if (query.exec()) {
             refreshCustomerTable();
             QMessageBox::information(this, "Xong", "Đã lưu thông tin khách hàng!");
+            txtCusName->clear(); 
         } else {
             QMessageBox::warning(this, "Lỗi Database", "Không thể lưu khách hàng!");
         }
