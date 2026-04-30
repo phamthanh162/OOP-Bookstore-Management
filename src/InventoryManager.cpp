@@ -4,12 +4,20 @@
 #include <QDebug>
 #include <QMessageBox>
 
+// 30/04
+#include <algorithm> // <--- THÊM DÒNG NÀY VÀO ĐỂ DÙNG HÀM SORT
+// 30/04
+
 InventoryManager::InventoryManager() {}
 
 void InventoryManager::loadFromDatabase() {
     bookList.clear(); // Xóa sạch cache cũ
-    QSqlQuery query("SELECT id, title, author, quantity, price FROM Books");
+    // QSqlQuery query("SELECT id, title, author, quantity, price FROM Books");
     
+// 30/04
+    QSqlQuery query("SELECT id, title, author, quantity, price FROM Books ORDER BY id ASC");
+// 30/04
+
     while (query.next()) {
         bookList.append(Book(
             query.value(0).toString(),
@@ -37,6 +45,14 @@ bool InventoryManager::addBook(const Book& newBook) {
 
     if (query.exec()) {
         bookList.append(newBook); // Cập nhật ngay vào cache để UI không bị lag
+
+    // 30/04
+    // --- CHÈN THÊM: Sắp xếp lại danh sách theo Mã sách (ID) từ A-Z ---
+    std::sort(bookList.begin(), bookList.end(), [](const Book& a, const Book& b) {
+        return a.getId() < b.getId();
+    });
+    // 30/04
+
         return true;
     }
     qDebug() << "Lỗi thêm sách DB:" << query.lastError().text();

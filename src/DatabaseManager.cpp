@@ -94,6 +94,48 @@ bool DatabaseManager::initializeDatabase() {
         }
     }
 
+// 30/04
+// --- MIGRATION SÁCH TỪ FILE TXT (CHUẨN CHUYÊN NGHIỆP) ---
+    QSqlQuery checkBooks("SELECT COUNT(*) FROM Books");
+    if (checkBooks.next() && checkBooks.value(0).toInt() == 0) {
+        QString filePath = dataFolder + "/db_books.txt";
+        QFile file(filePath);
+        
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream in(&file);
+            in.setEncoding(QStringConverter::Utf8); 
+
+            QSqlQuery q;
+            q.prepare("INSERT INTO Books (id, title, author, quantity, price) VALUES (:id, :title, :author, :qty, :price)");
+            
+            QSqlDatabase::database().transaction(); 
+            int count = 0;
+            while (!in.atEnd()) {
+                QString line = in.readLine().trimmed();
+                if (line.isEmpty()) continue; 
+
+                QStringList p = line.split("|");
+                if (p.size() >= 5) {
+                    q.bindValue(":id", p[0].trimmed());
+                    q.bindValue(":title", p[1].trimmed());
+                    q.bindValue(":author", p[2].trimmed());
+                    q.bindValue(":qty", p[3].toInt());
+                    q.bindValue(":price", p[4].toDouble());
+                    q.exec();
+                    count++;
+                }
+            }
+            QSqlDatabase::database().commit(); 
+            file.close();
+            qDebug() << "✅ THÀNH CÔNG: Đã nạp" << count << "cuốn sách từ file db_books.txt!";
+        } else {
+            // BẪY LỖI: In ra đích danh đường dẫn bị sai để Dev biết đường sửa
+            qDebug() << "❌ LỖI NGHIÊM TRỌNG: Không thể mở file chứa dữ liệu sách!";
+            qDebug() << "👉 App đang cố tìm file tại đường dẫn này:" << filePath;
+        }
+    }
+// 30/04
+
     // --- MIGRATION VOUCHER ---
     QSqlQuery checkVou("SELECT COUNT(*) FROM Vouchers");
     if (checkVou.next() && checkVou.value(0).toInt() == 0) {
